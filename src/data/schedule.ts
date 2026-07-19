@@ -16,6 +16,7 @@ export interface Faculty {
   schedule: ScheduleSlot[];
   disabled?: boolean;
   profileColor?: string;
+  icon?: string;
 }
 
 export const FALLBACK_SCHEDULES: Faculty[] = [

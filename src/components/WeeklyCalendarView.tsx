@@ -184,12 +184,69 @@ export const WeeklyCalendarView: React.FC<WeeklyCalendarViewProps> = ({
                         const top = getOffsetTop(slot.startTime);
                         const height = getSlotHeight(slot.startTime, slot.endTime);
                         
-                        // Calendar color theme
+                        // Calendar color theme based on custom profile color
+                        const profileBg = faculty.profileColor || 'bg-blue-600';
                         let colorTheme = {
                           bg: 'bg-blue-50/90 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800/60',
                           text: 'text-blue-700 dark:text-blue-300',
                           badge: 'bg-blue-500'
                         };
+
+                        if (profileBg.includes('emerald')) {
+                          colorTheme = {
+                            bg: 'bg-emerald-50/90 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/60',
+                            text: 'text-emerald-700 dark:text-emerald-300',
+                            badge: 'bg-emerald-500'
+                          };
+                        } else if (profileBg.includes('rose')) {
+                          colorTheme = {
+                            bg: 'bg-rose-50/90 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800/60',
+                            text: 'text-rose-700 dark:text-rose-300',
+                            badge: 'bg-rose-500'
+                          };
+                        } else if (profileBg.includes('indigo')) {
+                          colorTheme = {
+                            bg: 'bg-indigo-50/90 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800/60',
+                            text: 'text-indigo-700 dark:text-indigo-300',
+                            badge: 'bg-indigo-500'
+                          };
+                        } else if (profileBg.includes('violet')) {
+                          colorTheme = {
+                            bg: 'bg-violet-50/90 dark:bg-violet-950/40 border-violet-200 dark:border-violet-800/60',
+                            text: 'text-violet-700 dark:text-violet-300',
+                            badge: 'bg-violet-500'
+                          };
+                        } else if (profileBg.includes('purple')) {
+                          colorTheme = {
+                            bg: 'bg-purple-50/90 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800/60',
+                            text: 'text-purple-700 dark:text-purple-300',
+                            badge: 'bg-purple-500'
+                          };
+                        } else if (profileBg.includes('teal')) {
+                          colorTheme = {
+                            bg: 'bg-teal-50/90 dark:bg-teal-950/40 border-teal-200 dark:border-teal-800/60',
+                            text: 'text-teal-700 dark:text-teal-300',
+                            badge: 'bg-teal-500'
+                          };
+                        } else if (profileBg.includes('orange')) {
+                          colorTheme = {
+                            bg: 'bg-orange-50/90 dark:bg-orange-950/40 border-orange-200 dark:border-orange-800/60',
+                            text: 'text-orange-750 dark:text-orange-305',
+                            badge: 'bg-orange-500'
+                          };
+                        } else if (profileBg.includes('amber')) {
+                          colorTheme = {
+                            bg: 'bg-amber-50/90 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/60',
+                            text: 'text-amber-750 dark:text-amber-305',
+                            badge: 'bg-amber-500'
+                          };
+                        } else if (profileBg.includes('slate')) {
+                          colorTheme = {
+                            bg: 'bg-slate-100/90 dark:bg-slate-900/40 border-slate-300 dark:border-slate-800/60',
+                            text: 'text-slate-750 dark:text-slate-305',
+                            badge: 'bg-slate-500'
+                          };
+                        }
 
                         return (
                           <motion.div

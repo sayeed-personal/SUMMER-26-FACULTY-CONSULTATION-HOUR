@@ -3,6 +3,7 @@ import { X, Copy, Check, Mail, Phone, ExternalLink, Calendar, MapPin, BookOpen, 
 import { motion, AnimatePresence } from 'motion/react';
 import { Faculty, DAY_COLORS } from '../data/schedule';
 import { formatTimeString, getDaySchedule, JS_DAY_MAP } from '../utils/timeUtils';
+import { FacultyAvatar } from './FacultyAvatar';
 
 interface FacultyDetailModalProps {
   faculty: Faculty | null;
@@ -91,9 +92,9 @@ export const FacultyDetailModal: React.FC<FacultyDetailModalProps> = ({
             {/* Profile Header */}
             <div className="flex flex-col md:flex-row items-center md:items-start gap-6 mt-2 mb-6">
               {/* Profile Avatar / Initials */}
-              <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-gradient-to-tr from-blue-500 to-indigo-600 flex flex-col items-center justify-center text-white font-display font-black text-2xl md:text-3xl tracking-widest shadow-lg shadow-blue-500/10">
-                {faculty.initial}
-                <span className="text-[10px] font-mono tracking-widest font-bold uppercase opacity-80 mt-1">
+              <div className="relative w-20 h-20 md:w-24 md:h-24 flex-none">
+                <FacultyAvatar faculty={faculty} className="w-full h-full text-2xl md:text-3xl shadow-lg" />
+                <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 text-[8px] font-mono tracking-widest font-bold uppercase text-white/80 whitespace-nowrap select-none">
                   BRACU
                 </span>
               </div>

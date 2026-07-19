@@ -2,11 +2,12 @@ import React, { useState, useRef } from 'react';
 import { 
   X, Plus, Edit2, Trash2, Copy, Save, Upload, Download, 
   RotateCcw, Power, Check, Calendar, Clock, User, 
-  MapPin, Mail, BookOpen, Palette, AlertTriangle
+  MapPin, Mail, BookOpen, Palette, AlertTriangle, GripVertical, Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Faculty, ScheduleSlot, ALL_DAYS } from '../data/schedule';
 import { haptic } from '../utils/haptic';
+import { FacultyAvatar, AVATAR_ICONS } from './FacultyAvatar';
 
 interface FacultyManagementPanelProps {
   isOpen: boolean;
@@ -40,6 +41,7 @@ export const FacultyManagementPanel: React.FC<FacultyManagementPanelProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingFaculty, setEditingFaculty] = useState<Faculty | null>(null);
+  const [draggedId, setDraggedId] = useState<string | null>(null);
   
   // Slot editor temp state
   const [newSlotDay, setNewSlotDay] = useState<ScheduleSlot['day']>('Sunday');
@@ -148,6 +150,31 @@ export const FacultyManagementPanel: React.FC<FacultyManagementPanelProps> = ({
     if (editingFaculty?.id === fac.id) {
       setEditingFaculty(prev => prev ? { ...prev, disabled: updatedStatus } : null);
     }
+  };
+
+  // Drag and Drop handlers for reordering
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    setDraggedId(id);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    if (!draggedId || draggedId === targetId) return;
+
+    const draggedIdx = faculties.findIndex(f => f.id === draggedId);
+    const targetIdx = faculties.findIndex(f => f.id === targetId);
+    if (draggedIdx === -1 || targetIdx === -1) return;
+
+    const updated = [...faculties];
+    const [draggedItem] = updated.splice(draggedIdx, 1);
+    updated.splice(targetIdx, 0, draggedItem);
+
+    onUpdateFaculties(updated);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedId(null);
   };
 
   // Slot management
@@ -375,7 +402,6 @@ export const FacultyManagementPanel: React.FC<FacultyManagementPanelProps> = ({
               ) : (
                 searchedFacs.map((fac) => {
                   const isSelected = editingFaculty?.id === fac.id;
-                  const profileBg = fac.profileColor || 'bg-blue-600';
                   
                   return (
                     <div
@@ -384,17 +410,29 @@ export const FacultyManagementPanel: React.FC<FacultyManagementPanelProps> = ({
                         haptic.light();
                         setEditingFaculty({ ...fac });
                       }}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, fac.id)}
+                      onDragOver={(e) => handleDragOver(e, fac.id)}
+                      onDragEnd={handleDragEnd}
                       className={`p-3 rounded-2xl border transition-all duration-300 cursor-pointer flex items-center justify-between gap-3 group relative ${
+                        draggedId === fac.id ? 'opacity-30 border-dashed border-blue-500 bg-blue-500/5 scale-95' : ''
+                      } ${
                         isSelected 
                           ? 'bg-blue-500/5 border-blue-500 dark:bg-blue-500/10 dark:border-blue-500/60' 
                           : 'bg-white dark:bg-zinc-900 border-slate-150 dark:border-zinc-800/60 hover:border-slate-300 dark:hover:border-zinc-700 hover:shadow-xs'
                       }`}
                     >
-                      <div className="flex items-center gap-3 min-w-0">
-                        {/* Profile initials visual badge */}
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-white font-display font-black text-xs shadow-sm flex-none ${profileBg} ${fac.disabled ? 'opacity-40 grayscale' : ''}`}>
-                          {fac.initial}
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        {/* Drag Handle */}
+                        <div 
+                          className="text-slate-300 dark:text-zinc-700 cursor-grab active:cursor-grabbing hover:text-slate-500 dark:hover:text-zinc-400 flex-none py-1.5"
+                          title="Drag to reorder"
+                        >
+                          <GripVertical className="w-4 h-4" />
                         </div>
+
+                        {/* Profile initials visual badge */}
+                        <FacultyAvatar faculty={fac} className="w-9 h-9 text-xs flex-none" />
                         
                         <div className="min-w-0">
                           <h4 className={`text-xs font-bold truncate ${fac.disabled ? 'text-slate-400 dark:text-zinc-500 line-through' : 'text-slate-850 dark:text-zinc-100'}`}>
@@ -594,6 +632,48 @@ export const FacultyManagementPanel: React.FC<FacultyManagementPanelProps> = ({
                             }`}
                             title={color.name}
                           />
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Icon Selection Option */}
+                  <div className="flex flex-col gap-2.5 sm:col-span-2 pt-2">
+                    <label className="text-[10px] font-mono font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      Custom Badge Icon (Optional)
+                    </label>
+                    <div className="grid grid-cols-4 sm:grid-cols-7 lg:grid-cols-8 gap-2">
+                      {/* Option to use initials instead (None) */}
+                      <button
+                        type="button"
+                        onClick={() => setEditingFaculty({ ...editingFaculty, icon: undefined })}
+                        className={`py-1.5 px-2 rounded-xl text-[10px] font-black border transition-all cursor-pointer flex items-center justify-center ${
+                          !editingFaculty.icon 
+                            ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-zinc-900 dark:border-white' 
+                            : 'bg-slate-50 border-slate-200/60 dark:bg-zinc-950 dark:border-zinc-850 text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-805'
+                        }`}
+                      >
+                        Initials
+                      </button>
+
+                      {Object.keys(AVATAR_ICONS).map((iconName) => {
+                        const IconNode = AVATAR_ICONS[iconName];
+                        const isSelected = editingFaculty.icon === iconName;
+                        return (
+                          <button
+                            key={iconName}
+                            type="button"
+                            onClick={() => setEditingFaculty({ ...editingFaculty, icon: iconName })}
+                            className={`p-2 rounded-xl border flex items-center justify-center cursor-pointer transition-all ${
+                              isSelected 
+                                ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-zinc-900 dark:border-white scale-105 shadow-sm' 
+                                : 'bg-slate-50 border-slate-200/60 dark:bg-zinc-950 dark:border-zinc-850 text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-805'
+                            }`}
+                            title={iconName}
+                          >
+                            <IconNode className="w-4 h-4 stroke-[2]" />
+                          </button>
                         );
                       })}
                     </div>

@@ -3,6 +3,7 @@ import { Sparkles, MapPin, Mail, ArrowRight, Star, Copy, Check } from 'lucide-re
 import { motion, AnimatePresence } from 'motion/react';
 import { Faculty, ScheduleSlot } from '../data/schedule';
 import { formatTimeString, getFacultyStatusInfo } from '../utils/timeUtils';
+import { FacultyAvatar } from './FacultyAvatar';
 
 interface AvailableNowCardProps {
   availableFaculty: Array<{ faculty: Faculty; slot: ScheduleSlot }>;
@@ -104,9 +105,7 @@ export const AvailableNowCard: React.FC<AvailableNowCardProps> = ({
                       </span>
 
                       {/* Prof Profile/Initials Badge */}
-                      <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-display font-black text-sm tracking-wide shadow-md shadow-emerald-500/10">
-                        {faculty.initial}
-                      </div>
+                      <FacultyAvatar faculty={faculty} className="w-11 h-11 text-sm shadow-md flex-none" isLive />
                       
                       <div>
                         <div className="flex items-center gap-1.5">

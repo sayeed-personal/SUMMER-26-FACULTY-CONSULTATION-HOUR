@@ -3,6 +3,7 @@ import { Clock, MapPin, Mail, Sparkles, Copy, Check, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Faculty, ALL_DAYS, DAY_COLORS } from '../data/schedule';
 import { formatTimeString, timeToMinutes, getFacultyStatusInfo } from '../utils/timeUtils';
+import { FacultyAvatar } from './FacultyAvatar';
 
 interface TimelineViewProps {
   faculties: Faculty[];
@@ -150,11 +151,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                             <div className="flex items-start justify-between gap-3 mb-2.5">
                               <div className="flex items-center gap-3">
                                 <div className="relative">
-                                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-display font-black text-xs shadow-md ${
-                                    isLive ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : 'bg-gradient-to-br from-blue-500 to-indigo-600'
-                                  }`}>
-                                    {faculty.initial}
-                                  </div>
+                                  <FacultyAvatar faculty={faculty} className="w-10 h-10 text-xs shadow-md flex-none" isLive={isLive} />
                                   {isLive && (
                                     <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
                                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>

@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp, MapPin, Mail, Clock, CalendarCheck, BookOpen } 
 import { motion, AnimatePresence } from 'motion/react';
 import { Faculty, ALL_DAYS, DAY_COLORS } from '../data/schedule';
 import { formatTimeString, timeToMinutes, getFacultyStatusInfo } from '../utils/timeUtils';
+import { FacultyAvatar } from './FacultyAvatar';
 
 interface WeeklyPlannerViewProps {
   faculties: Faculty[];
@@ -150,9 +151,7 @@ export const WeeklyPlannerView: React.FC<WeeklyPlannerViewProps> = ({
                             <div>
                               {/* Header info */}
                               <div className="flex items-center gap-2.5 mb-3">
-                                <div className={`w-9 h-9 rounded-xl ${colors.bg} ${colors.text} flex items-center justify-center font-display font-black text-xs tracking-wider shadow-sm`}>
-                                  {faculty.initial}
-                                </div>
+                                <FacultyAvatar faculty={faculty} className="w-9 h-9 text-xs shadow-sm flex-none" />
                                 <div className="min-w-0">
                                   <h4 className="font-display font-black text-sm text-slate-800 dark:text-zinc-200 tracking-tight truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                                     {faculty.name}

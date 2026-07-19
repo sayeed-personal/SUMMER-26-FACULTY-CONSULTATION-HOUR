@@ -3,6 +3,7 @@ import { Calendar, MapPin, Hourglass, ArrowRight, Bell, Sparkles } from 'lucide-
 import { motion } from 'motion/react';
 import { Faculty, ScheduleSlot } from '../data/schedule';
 import { formatTimeString, JS_DAY_MAP, getSecondsDifference, timeToMinutes } from '../utils/timeUtils';
+import { FacultyAvatar } from './FacultyAvatar';
 
 interface NextConsultationCardProps {
   is24Hour: boolean;
@@ -227,9 +228,7 @@ export const NextConsultationCard: React.FC<NextConsultationCardProps> = ({
               </p>
             </div>
             
-            <div className="w-10 h-10 rounded-xl bg-blue-600 dark:bg-blue-500 text-white flex items-center justify-center font-bold text-sm tracking-tight shadow-md">
-              {faculty.initial}
-            </div>
+            <FacultyAvatar faculty={faculty} className="w-10 h-10 text-xs shadow-md flex-none" />
           </div>
 
           <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-200/50 dark:border-zinc-800/50 text-xs">

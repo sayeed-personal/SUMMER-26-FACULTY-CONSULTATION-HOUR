@@ -210,7 +210,8 @@ export const SearchFilterBoard: React.FC<SearchFilterBoardProps> = ({
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {['MAF', 'RKBM', 'AFE', 'TBM', 'AVB'].map((initial) => {
+            {Array.from(new Set(faculties.map(f => f.initial).filter(Boolean))).map((initialItem) => {
+              const initial = initialItem as string;
               const isChecked = selectedFacultyFilter.includes(initial) || selectedFacultyFilter.length === 0;
               const isStrictlyChecked = selectedFacultyFilter.includes(initial);
               return (
