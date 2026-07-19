@@ -32,6 +32,9 @@ import {
 import { 
   SettingsModal 
 } from './components/SettingsModal';
+import { 
+  FacultyManagementPanel 
+} from './components/FacultyManagementPanel';
 
 import { 
   FALLBACK_SCHEDULES, 
@@ -53,7 +56,22 @@ import { haptic } from './utils/haptic';
 
 export default function App() {
   // --- STATE ---
-  const [faculties, setFaculties] = useState<Faculty[]>(FALLBACK_SCHEDULES);
+  const [faculties, setFaculties] = useState<Faculty[]>(() => {
+    const saved = localStorage.getItem('brac_faculties');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      } catch (e) {
+        console.warn('Failed to parse saved faculties', e);
+      }
+    }
+    return FALLBACK_SCHEDULES;
+  });
+
+  const [isManagementOpen, setIsManagementOpen] = useState(false);
   
   // App preferences
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
@@ -148,6 +166,11 @@ export default function App() {
     localStorage.setItem('brac_favorites', JSON.stringify(favorites));
   }, [favorites]);
 
+  // Save faculties changes locally
+  useEffect(() => {
+    localStorage.setItem('brac_faculties', JSON.stringify(faculties));
+  }, [faculties]);
+
   // --- CLOCK TRIGGER ---
   useEffect(() => {
     const timer = setInterval(() => {
@@ -158,6 +181,9 @@ export default function App() {
 
   // --- FETCH SCHEDULE DATA ---
   useEffect(() => {
+    const saved = localStorage.getItem('brac_faculties');
+    if (saved) return;
+
     fetch('/schedule.json')
       .then((res) => {
         if (!res.ok) throw new Error('Fetch failed');
@@ -166,6 +192,7 @@ export default function App() {
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
           setFaculties(data);
+          localStorage.setItem('brac_faculties', JSON.stringify(data));
         }
       })
       .catch((err) => {
@@ -215,7 +242,7 @@ export default function App() {
   // Calculate available faculties right now
   const getAvailableFacultiesNow = (): Array<{ faculty: Faculty; slot: ScheduleSlot }> => {
     const result: Array<{ faculty: Faculty; slot: ScheduleSlot }> = [];
-    faculties.forEach(faculty => {
+    faculties.filter(f => !f.disabled).forEach(faculty => {
       const activeSlot = getActiveConsultation(faculty, appDay, appTimeStr);
       if (activeSlot) {
         result.push({ faculty, slot: activeSlot });
@@ -227,11 +254,11 @@ export default function App() {
   const activeConsultationsNow = getAvailableFacultiesNow();
 
   // Find next consultation countdown info
-  const nextConsultationInfo = getNextConsultation(faculties, appDay, appTimeStr);
+  const nextConsultationInfo = getNextConsultation(faculties.filter(f => !f.disabled), appDay, appTimeStr);
 
   // --- FILTER CORE ---
   const getFilteredFaculties = () => {
-    return faculties.filter(f => {
+    return faculties.filter(f => !f.disabled).filter(f => {
       // 1. Filter by Favorites
       if (showOnlyFavorites && !favorites.includes(f.id)) {
         return false;
@@ -280,6 +307,7 @@ export default function App() {
       setSelectedFacultyFilter([]);
       setShowOnlyFavorites(false);
       localStorage.clear();
+      setFaculties(FALLBACK_SCHEDULES);
       setIsDarkMode(true);
       setIs24Hour(false);
       setIsSettingsOpen(false);
@@ -428,7 +456,7 @@ export default function App() {
   };
 
   // --- REAL-TIME STATUS VALUES FOR HEADER AND CARDS ---
-  const facultiesStatus = faculties.map(f => getFacultyStatusInfo(f, realTime, isSimulatingTime, simulatedTime));
+  const facultiesStatus = faculties.filter(f => !f.disabled).map(f => getFacultyStatusInfo(f, realTime, isSimulatingTime, simulatedTime));
   const availableCount = facultiesStatus.filter(info => info.status === 'live').length;
 
   const nextUp = facultiesStatus
@@ -467,7 +495,7 @@ export default function App() {
         
         {/* Real-time stats widgets */}
         <DashboardStats
-          faculties={faculties}
+          faculties={faculties.filter(f => !f.disabled)}
           currentDay={selectedDay}
           availableCount={activeConsultationsNow.length}
         />
@@ -493,13 +521,13 @@ export default function App() {
             realTime={realTime}
             isSimulatingTime={isSimulatingTime}
             simulatedTime={simulatedTime}
-            faculties={faculties}
+            faculties={faculties.filter(f => !f.disabled)}
           />
         </div>
 
         {/* Dynamic Filters Board */}
         <SearchFilterBoard
-          faculties={faculties}
+          faculties={faculties.filter(f => !f.disabled)}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           selectedFacultyFilter={selectedFacultyFilter}
@@ -691,6 +719,23 @@ export default function App() {
         setIsSimulatingTime={setIsSimulatingTime}
         simulatedTime={simulatedTime}
         setSimulatedTime={setSimulatedTime}
+        onOpenManagement={() => {
+          setIsSettingsOpen(false);
+          setIsManagementOpen(true);
+        }}
+      />
+
+      {/* Faculty Management Console */}
+      <FacultyManagementPanel
+        isOpen={isManagementOpen}
+        onClose={() => setIsManagementOpen(false)}
+        faculties={faculties}
+        onUpdateFaculties={(newFacs) => setFaculties(newFacs)}
+        onRestoreDefaultFaculties={() => {
+          setFaculties(FALLBACK_SCHEDULES);
+          localStorage.setItem('brac_faculties', JSON.stringify(FALLBACK_SCHEDULES));
+        }}
+        showToast={showToast}
       />
 
       {/* Toast Notification HUD */}

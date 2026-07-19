@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Clock, Eye, Trash2, ShieldAlert, Sparkles, Smartphone, Check, SlidersHorizontal } from 'lucide-react';
+import { X, Clock, Eye, Trash2, ShieldAlert, Sparkles, Smartphone, Check, SlidersHorizontal, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface SettingsModalProps {
@@ -16,6 +16,7 @@ interface SettingsModalProps {
   setIsSimulatingTime?: (val: boolean) => void;
   simulatedTime?: { day: string; time: string };
   setSimulatedTime?: (val: any) => void;
+  onOpenManagement: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -31,7 +32,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   isSimulatingTime,
   setIsSimulatingTime,
   simulatedTime,
-  setSimulatedTime
+  setSimulatedTime,
+  onOpenManagement
 }) => {
   return (
     <AnimatePresence>
@@ -224,6 +226,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   </div>
                 </div>
               )}
+
+              {/* Faculty Management Segment */}
+              <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/10 dark:border-blue-500/15 flex flex-col gap-3">
+                <div className="flex items-start gap-2.5">
+                  <Users className="w-4 h-4 text-blue-500 flex-none mt-0.5" />
+                  <div>
+                    <h4 className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                      Roster Management
+                    </h4>
+                    <p className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">
+                      Configure faculty instructors, update room assignments, and customize consulting slots.
+                    </p>
+                  </div>
+                </div>
+
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  onClick={onOpenManagement}
+                  className="w-full py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-blue-500/10"
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  <span>Manage Faculty</span>
+                </motion.button>
+              </div>
 
               {/* Reset Segment */}
               <div className="p-4 rounded-2xl bg-rose-500/5 border border-rose-500/10 dark:border-rose-500/15 flex flex-col gap-3">
