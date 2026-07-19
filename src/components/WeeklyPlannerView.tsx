@@ -33,6 +33,21 @@ export const WeeklyPlannerView: React.FC<WeeklyPlannerViewProps> = ({
     Thursday: true
   });
 
+  React.useEffect(() => {
+    const handleScrollToToday = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const todayDay = customEvent.detail?.day;
+      if (todayDay) {
+        setExpandedDays(prev => ({
+          ...prev,
+          [todayDay]: true
+        }));
+      }
+    };
+    window.addEventListener('scroll-to-today', handleScrollToToday);
+    return () => window.removeEventListener('scroll-to-today', handleScrollToToday);
+  }, []);
+
   const toggleDay = (day: string) => {
     setExpandedDays(prev => ({
       ...prev,
@@ -122,6 +137,7 @@ export const WeeklyPlannerView: React.FC<WeeklyPlannerViewProps> = ({
                         return (
                           <motion.div
                             key={`${faculty.id}-${slot.startTime}`}
+                            id={`planner-card-${faculty.id}-${slot.startTime}`}
                             whileHover={{ y: -3, scale: 1.01 }}
                             onClick={() => onSelectFaculty(faculty)}
                             className="p-4 rounded-2xl bg-white/75 dark:bg-zinc-900/75 backdrop-blur-xs border border-slate-200/50 dark:border-zinc-800/50 hover:border-blue-500/30 hover:shadow-md transition-all duration-300 cursor-pointer flex flex-col justify-between group shadow-xs relative"

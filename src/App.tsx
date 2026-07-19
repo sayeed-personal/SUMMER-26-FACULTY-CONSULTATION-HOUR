@@ -43,7 +43,8 @@ import {
   JS_DAY_MAP, 
   getActiveConsultation, 
   getNextConsultation,
-  getFacultyStatusInfo
+  getFacultyStatusInfo,
+  timeToMinutes
 } from './utils/timeUtils';
 
 import { motion, AnimatePresence } from 'motion/react';
@@ -104,6 +105,17 @@ export default function App() {
 
   // Offline status tracking
   const [isOffline, setIsOffline] = useState<boolean>(!navigator.onLine);
+
+  // Toast status tracking
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    const id = setTimeout(() => {
+      setToastMessage(null);
+    }, 3500);
+    return id;
+  };
 
   useEffect(() => {
     const handleOnline = () => setIsOffline(false);
@@ -312,15 +324,100 @@ export default function App() {
 
   const handleGoToToday = () => {
     haptic.medium();
-    setActiveTab('timeline');
-    const timelineEl = document.getElementById('timeline-section');
-    if (timelineEl) {
-      timelineEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Determine target tab and switch
+    const targetTab = activeTab === 'planner' || activeTab === 'timeline' ? activeTab : 'timeline';
+    setActiveTab(targetTab);
+    setSelectedDay(appDay);
+
+    // Dispatch event to automatically expand the section if in Weekly Planner view
+    window.dispatchEvent(new CustomEvent('scroll-to-today', { detail: { day: appDay } }));
+
+    // Gather today's active schedule for currently filtered faculties
+    const filteredFacs = getFilteredFaculties();
+    const todayConsultations: Array<{ faculty: Faculty; slot: ScheduleSlot }> = [];
+    filteredFacs.forEach(faculty => {
+      faculty.schedule.forEach(slot => {
+        if (slot.day === appDay) {
+          todayConsultations.push({ faculty, slot });
+        }
+      });
+    });
+
+    // Sort chronologically
+    todayConsultations.sort((a, b) => timeToMinutes(a.slot.startTime) - timeToMinutes(b.slot.startTime));
+
+    let targetCardId = '';
+    let isLiveTarget = false;
+
+    if (todayConsultations.length > 0) {
+      const currentMins = timeToMinutes(appTimeStr);
+      
+      // 1. If a consultation is currently live, target it
+      const liveItem = todayConsultations.find(item => {
+        const startMins = timeToMinutes(item.slot.startTime);
+        const endMins = timeToMinutes(item.slot.endTime);
+        return currentMins >= startMins && currentMins < endMins;
+      });
+
+      if (liveItem) {
+        isLiveTarget = true;
+        targetCardId = targetTab === 'planner'
+          ? `planner-card-${liveItem.faculty.id}-${liveItem.slot.startTime}`
+          : `consultation-card-${liveItem.faculty.id}-${liveItem.slot.startTime}`;
+      } else {
+        // 2. Otherwise, target the next upcoming consultation today
+        const upcomingItem = todayConsultations.find(item => {
+          const startMins = timeToMinutes(item.slot.startTime);
+          return startMins > currentMins;
+        });
+
+        if (upcomingItem) {
+          targetCardId = targetTab === 'planner'
+            ? `planner-card-${upcomingItem.faculty.id}-${upcomingItem.slot.startTime}`
+            : `consultation-card-${upcomingItem.faculty.id}-${upcomingItem.slot.startTime}`;
+        } else {
+          // 3. If all consultations have ended, target the last one and display ended alert
+          const lastItem = todayConsultations[todayConsultations.length - 1];
+          targetCardId = targetTab === 'planner'
+            ? `planner-card-${lastItem.faculty.id}-${lastItem.slot.startTime}`
+            : `consultation-card-${lastItem.faculty.id}-${lastItem.slot.startTime}`;
+          
+          showToast("Today's scheduled consultations have ended.");
+        }
+      }
     } else {
-      setTimeout(() => {
-        document.getElementById('timeline-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
+      showToast(`No consultations scheduled for ${appDay}.`);
     }
+
+    // Scroll to the targeted element or fallback, applying visual highlight
+    const performScroll = () => {
+      let elementToScroll = document.getElementById(targetCardId);
+      
+      if (!elementToScroll) {
+        elementToScroll = document.getElementById('timeline-section');
+      }
+
+      if (elementToScroll) {
+        elementToScroll.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Clear any prior classes
+        elementToScroll.classList.remove('animate-highlight-glow', 'animate-highlight-glow-live');
+        
+        // Force reflow
+        void elementToScroll.offsetWidth;
+        
+        // Apply glow classes for 2.5 seconds
+        const animClass = isLiveTarget ? 'animate-highlight-glow-live' : 'animate-highlight-glow';
+        elementToScroll.classList.add(animClass);
+        setTimeout(() => {
+          elementToScroll?.classList.remove(animClass);
+        }, 2500);
+      }
+    };
+
+    // Delay scroll slightly to allow rendering state transition (tab change & list updating)
+    setTimeout(performScroll, 120);
   };
 
   const handleSelectFaculty = (fac: Faculty | null) => {
@@ -595,6 +692,24 @@ export default function App() {
         simulatedTime={simulatedTime}
         setSimulatedTime={setSimulatedTime}
       />
+
+      {/* Toast Notification HUD */}
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-slate-900/90 dark:bg-zinc-900/95 backdrop-blur-md text-white dark:text-zinc-50 border border-slate-700/35 dark:border-zinc-800/80 px-4 py-2.5 rounded-2xl flex items-center gap-2.5 shadow-xl text-xs font-bold tracking-tight select-none pointer-events-none"
+          >
+            <span className="flex h-2 w-2 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+            </span>
+            <span>{toastMessage}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

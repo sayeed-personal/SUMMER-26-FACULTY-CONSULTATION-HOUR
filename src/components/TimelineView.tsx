@@ -137,6 +137,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                       return (
                         <motion.div
                           key={faculty.id}
+                          id={`consultation-card-${faculty.id}-${slot.startTime}`}
                           whileHover={{ scale: 1.015, y: -2 }}
                           onClick={() => onSelectFaculty(faculty)}
                           className={`p-3.5 rounded-xl glass-panel border hover:shadow-md transition-all duration-300 cursor-pointer flex flex-col justify-between group shadow-sm ${
