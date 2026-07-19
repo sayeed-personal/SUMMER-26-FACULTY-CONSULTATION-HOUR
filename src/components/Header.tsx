@@ -11,6 +11,8 @@ interface HeaderProps {
   installPrompt: any;
   onInstall: () => void;
   isOffline?: boolean;
+  availableCount: number;
+  nextConsultationStr: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -21,7 +23,9 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSettings,
   installPrompt,
   onInstall,
-  isOffline = false
+  isOffline = false,
+  availableCount,
+  nextConsultationStr
 }) => {
   // Format live time string
   const formatTime = () => {
@@ -62,14 +66,18 @@ export const Header: React.FC<HeaderProps> = ({
             <CalendarRange className="w-5 h-5 md:w-6 md:h-6" />
           </motion.div>
           <div>
-            <div className="flex flex-col mb-1.5">
-              <span className="text-[9px] font-sans text-slate-400 dark:text-zinc-500 tracking-wider font-medium uppercase">
+            <motion.div 
+              whileHover={{ scale: 1.025, y: -1 }}
+              className="inline-flex flex-col mb-2 p-1.5 px-3 rounded-2xl bg-slate-100/60 dark:bg-zinc-900/60 border border-slate-200/50 dark:border-zinc-800/40 shadow-xs backdrop-blur-md cursor-default"
+            >
+              <span className="text-[8px] font-mono text-slate-500 dark:text-zinc-500 tracking-widest font-black uppercase flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                 Designed & Developed by
               </span>
-              <span className="text-[10px] font-sans font-semibold text-slate-700 dark:text-zinc-300 tracking-wide mt-0.5">
+              <span className="text-[11px] font-display font-extrabold text-blue-600 dark:text-blue-400 tracking-wide mt-0.5">
                 Sayeed M Mobtasim
               </span>
-            </div>
+            </motion.div>
             <div className="flex items-center gap-2">
               <span className="font-mono text-[9px] tracking-widest text-blue-600 dark:text-blue-400 font-bold uppercase">
                 BRACU
@@ -89,14 +97,45 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Live Clock & Action Panel */}
         <div className="flex items-center gap-2 md:gap-4">
-          {/* Live Date and Time */}
-          <div className="hidden lg:flex flex-col items-end pr-3 border-r border-slate-200 dark:border-zinc-800">
-            <span className="text-[11px] font-mono font-medium text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
-              {formatDate()}
-            </span>
-            <div className="flex items-center gap-1.5 text-sm font-mono font-bold text-slate-800 dark:text-zinc-200">
-              <Clock className="w-3.5 h-3.5 text-blue-500" />
-              <span>{formatTime()}</span>
+          {/* Real-time Status Widget */}
+          <div className="hidden md:flex items-center gap-4 bg-slate-100/40 dark:bg-zinc-900/40 border border-slate-200/40 dark:border-zinc-800/40 rounded-2xl px-4 py-2 shadow-xs backdrop-blur-md">
+            {/* Clock */}
+            <div className="flex flex-col pr-3 border-r border-slate-200/80 dark:border-zinc-800/60 min-w-[125px]">
+              <span className="text-[8px] font-mono font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest leading-none">
+                Current Time
+              </span>
+              <span className="text-[9px] font-bold text-slate-500 dark:text-zinc-400 font-sans tracking-wide mt-1 leading-none">
+                {currentTime.toLocaleDateString('en-US', { weekday: 'long' })}
+              </span>
+              <span className="text-[11px] font-mono font-black text-slate-800 dark:text-zinc-200 flex items-center gap-1 mt-1 leading-none">
+                {formatTime()}
+              </span>
+            </div>
+
+            {/* Available count */}
+            <div className="flex flex-col pr-3 border-r border-slate-200/80 dark:border-zinc-800/60 min-w-[95px]">
+              <span className="text-[8px] font-mono font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest leading-none">
+                Faculty Available
+              </span>
+              <div className="flex items-center gap-1.5 mt-1.5 leading-none">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="text-xs font-display font-extrabold text-emerald-600 dark:text-emerald-400">
+                  {availableCount} Available
+                </span>
+              </div>
+            </div>
+
+            {/* Next Consultation countdown */}
+            <div className="flex flex-col max-w-[150px]">
+              <span className="text-[8px] font-mono font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest leading-none">
+                Next Consultation
+              </span>
+              <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 mt-1.5 truncate leading-none">
+                {nextConsultationStr}
+              </span>
             </div>
           </div>
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Clock, MapPin, Mail, Sparkles, Copy, Check, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Faculty, ALL_DAYS, DAY_COLORS } from '../data/schedule';
-import { formatTimeString, timeToMinutes } from '../utils/timeUtils';
+import { formatTimeString, timeToMinutes, getFacultyStatusInfo } from '../utils/timeUtils';
 
 interface TimelineViewProps {
   faculties: Faculty[];
@@ -11,6 +11,9 @@ interface TimelineViewProps {
   favorites: string[];
   selectedDay: string;
   onSelectDay: (day: 'Saturday' | 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday') => void;
+  realTime: Date;
+  isSimulatingTime: boolean;
+  simulatedTime: { day: string; time: string };
 }
 
 export const TimelineView: React.FC<TimelineViewProps> = ({
@@ -19,7 +22,10 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
   onSelectFaculty,
   favorites,
   selectedDay,
-  onSelectDay
+  onSelectDay,
+  realTime,
+  isSimulatingTime,
+  simulatedTime
 }) => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -125,18 +131,35 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                       const isFav = favorites.includes(faculty.id);
                       const copyKey = `${faculty.id}-${startTime}-room`;
                       
+                      const statusInfo = getFacultyStatusInfo(faculty, realTime, isSimulatingTime, simulatedTime);
+                      const isLive = statusInfo.status === 'live';
+
                       return (
                         <motion.div
                           key={faculty.id}
                           whileHover={{ scale: 1.015, y: -2 }}
                           onClick={() => onSelectFaculty(faculty)}
-                          className="p-5 rounded-2xl glass-panel border border-slate-200/65 dark:border-zinc-800/50 hover:border-blue-500/30 hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col justify-between group shadow-sm"
+                          className={`p-5 rounded-2xl glass-panel border hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col justify-between group shadow-sm ${
+                            isLive
+                              ? 'border-emerald-500/55 dark:border-emerald-500/40 shadow-lg shadow-emerald-500/5 ring-1 ring-emerald-500/25 bg-emerald-50/5 dark:bg-emerald-950/5'
+                              : 'border-slate-200/65 dark:border-zinc-800/50 hover:border-blue-500/30'
+                          }`}
                         >
                           <div>
                             <div className="flex items-start justify-between gap-3 mb-4">
                               <div className="flex items-center gap-3">
-                                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-display font-black text-sm shadow-md">
-                                  {faculty.initial}
+                                <div className="relative">
+                                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-white font-display font-black text-sm shadow-md ${
+                                    isLive ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : 'bg-gradient-to-br from-blue-500 to-indigo-600'
+                                  }`}>
+                                    {faculty.initial}
+                                  </div>
+                                  {isLive && (
+                                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                      <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border border-white dark:border-zinc-900"></span>
+                                    </span>
+                                  )}
                                 </div>
                                 <div>
                                   <div className="flex items-center gap-1.5">
@@ -174,6 +197,43 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                                 <Clock className="w-3.5 h-3.5 text-blue-500" />
                                 <span>{slot.startTime} – {slot.endTime}</span>
                               </div>
+                            </div>
+                          </div>
+
+                          {/* Premium Real-Time Status HUD */}
+                          <div className="mt-4 p-2.5 rounded-xl bg-slate-50/70 dark:bg-zinc-900/50 border border-slate-150 dark:border-zinc-800/40 flex flex-col gap-1.5 text-[10px] font-mono">
+                            <div className="flex items-center justify-between">
+                              <span className="text-slate-400 dark:text-zinc-500 uppercase font-bold tracking-wider">Status</span>
+                              <span className={`font-black flex items-center gap-1 uppercase tracking-wide ${
+                                isLive ? 'text-emerald-600 dark:text-emerald-450 font-extrabold' :
+                                statusInfo.status === 'upcoming' ? 'text-amber-600 dark:text-amber-450 font-extrabold' :
+                                'text-rose-600 dark:text-rose-450'
+                              }`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${
+                                  isLive ? 'bg-emerald-500 animate-pulse' :
+                                  statusInfo.status === 'upcoming' ? 'bg-amber-500 animate-pulse' :
+                                  'bg-rose-500'
+                                }`}></span>
+                                {statusInfo.statusLabel}
+                              </span>
+                            </div>
+                            
+                            {statusInfo.secondsRemaining > 0 && (
+                              <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-zinc-800/20">
+                                <span className="text-slate-400 dark:text-zinc-500 uppercase font-bold tracking-wider">
+                                  {isLive ? 'Ends In' : 'Starts In'}
+                                </span>
+                                <span className="font-extrabold text-slate-700 dark:text-zinc-300">
+                                  {statusInfo.countdownStr}
+                                </span>
+                              </div>
+                            )}
+
+                            <div className="flex items-center justify-between pt-1 border-t border-slate-150 dark:border-zinc-800/25">
+                              <span className="text-slate-400 dark:text-zinc-500 uppercase font-bold tracking-wider">Next Session</span>
+                              <span className="font-semibold text-slate-600 dark:text-zinc-400 truncate max-w-[120px] text-right">
+                                {statusInfo.nextSlot ? `${statusInfo.nextSlot.day.slice(0,3)} ${formatTimeString(statusInfo.nextSlot.startTime, is24Hour)}` : 'None'}
+                              </span>
                             </div>
                           </div>
 

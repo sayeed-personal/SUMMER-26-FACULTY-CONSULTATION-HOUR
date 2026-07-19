@@ -2,20 +2,26 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, MapPin, Mail, Clock, CalendarCheck, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Faculty, ALL_DAYS, DAY_COLORS } from '../data/schedule';
-import { formatTimeString, timeToMinutes } from '../utils/timeUtils';
+import { formatTimeString, timeToMinutes, getFacultyStatusInfo } from '../utils/timeUtils';
 
 interface WeeklyPlannerViewProps {
   faculties: Faculty[];
   is24Hour: boolean;
   onSelectFaculty: (faculty: Faculty) => void;
   favorites: string[];
+  realTime: Date;
+  isSimulatingTime: boolean;
+  simulatedTime: { day: string; time: string };
 }
 
 export const WeeklyPlannerView: React.FC<WeeklyPlannerViewProps> = ({
   faculties,
   is24Hour,
   onSelectFaculty,
-  favorites
+  favorites,
+  realTime,
+  isSimulatingTime,
+  simulatedTime
 }) => {
   // By default, open Saturday/Sunday or current day
   const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({
@@ -181,6 +187,48 @@ export const WeeklyPlannerView: React.FC<WeeklyPlannerViewProps> = ({
                                 </span>
                               )}
                             </div>
+
+                            {/* Premium Real-Time Status HUD */}
+                            {(() => {
+                              const statusInfo = getFacultyStatusInfo(faculty, realTime, isSimulatingTime, simulatedTime);
+                              return (
+                                <div className="mt-3.5 p-2.5 rounded-xl bg-slate-50/70 dark:bg-zinc-900/50 border border-slate-150 dark:border-zinc-800/40 flex flex-col gap-1.5 text-[10px] font-mono">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-slate-400 dark:text-zinc-500 uppercase font-bold tracking-wider">Status</span>
+                                    <span className={`font-black flex items-center gap-1 uppercase tracking-wide ${
+                                      statusInfo.status === 'live' ? 'text-emerald-600 dark:text-emerald-450' :
+                                      statusInfo.status === 'upcoming' ? 'text-amber-600 dark:text-amber-450' :
+                                      'text-rose-600 dark:text-rose-450'
+                                    }`}>
+                                      <span className={`w-1.5 h-1.5 rounded-full ${
+                                        statusInfo.status === 'live' ? 'bg-emerald-500 animate-pulse' :
+                                        statusInfo.status === 'upcoming' ? 'bg-amber-500 animate-pulse' :
+                                        'bg-rose-500'
+                                      }`}></span>
+                                      {statusInfo.statusLabel}
+                                    </span>
+                                  </div>
+                                  
+                                  {statusInfo.secondsRemaining > 0 && (
+                                    <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-zinc-800/20">
+                                      <span className="text-slate-400 dark:text-zinc-500 uppercase font-bold tracking-wider">
+                                        {statusInfo.status === 'live' ? 'Ends In' : 'Starts In'}
+                                      </span>
+                                      <span className="font-extrabold text-slate-700 dark:text-zinc-300">
+                                        {statusInfo.countdownStr}
+                                      </span>
+                                    </div>
+                                  )}
+
+                                  <div className="flex items-center justify-between pt-1 border-t border-slate-150 dark:border-zinc-800/25">
+                                    <span className="text-slate-400 dark:text-zinc-500 uppercase font-bold tracking-wider">Next Session</span>
+                                    <span className="font-semibold text-slate-600 dark:text-zinc-400 truncate max-w-[110px] text-right">
+                                      {statusInfo.nextSlot ? `${statusInfo.nextSlot.day.slice(0,3)} ${formatTimeString(statusInfo.nextSlot.startTime, is24Hour)}` : 'None'}
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </motion.div>
                         );
                       })

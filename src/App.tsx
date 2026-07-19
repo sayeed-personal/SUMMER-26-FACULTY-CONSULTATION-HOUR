@@ -42,7 +42,8 @@ import {
 import { 
   JS_DAY_MAP, 
   getActiveConsultation, 
-  getNextConsultation 
+  getNextConsultation,
+  getFacultyStatusInfo
 } from './utils/timeUtils';
 
 import { motion, AnimatePresence } from 'motion/react';
@@ -297,6 +298,20 @@ export default function App() {
     downloadAnchor.remove();
   };
 
+  // --- REAL-TIME STATUS VALUES FOR HEADER AND CARDS ---
+  const facultiesStatus = faculties.map(f => getFacultyStatusInfo(f, realTime, isSimulatingTime, simulatedTime));
+  const availableCount = facultiesStatus.filter(info => info.status === 'live').length;
+
+  const nextUp = facultiesStatus
+    .filter(info => info.status !== 'live' && info.secondsRemaining > 0)
+    .sort((a, b) => a.secondsRemaining - b.secondsRemaining)[0];
+
+  const nextConsultationStr = nextUp 
+    ? (nextUp.secondsRemaining < 3600
+        ? `Starts in ${Math.ceil(nextUp.secondsRemaining / 60)} min`
+        : nextUp.countdownStr)
+    : 'No upcoming sessions';
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-zinc-50 transition-colors duration-500 flex flex-col justify-between">
       
@@ -314,6 +329,8 @@ export default function App() {
         installPrompt={installPrompt}
         onInstall={handleInstallPWA}
         isOffline={isOffline}
+        availableCount={availableCount}
+        nextConsultationStr={nextConsultationStr}
       />
 
       {/* Primary Container */}
@@ -388,13 +405,19 @@ export default function App() {
             onSelectFaculty={(fac) => setSelectedFaculty(fac)}
             favorites={favorites}
             onToggleFavorite={handleToggleFavorite}
+            realTime={realTime}
+            isSimulatingTime={isSimulatingTime}
+            simulatedTime={simulatedTime}
           />
 
           {/* Countdown module */}
           <NextConsultationCard
-            nextConsultInfo={nextConsultationInfo}
             is24Hour={is24Hour}
             onSelectFaculty={(fac) => setSelectedFaculty(fac)}
+            realTime={realTime}
+            isSimulatingTime={isSimulatingTime}
+            simulatedTime={simulatedTime}
+            faculties={faculties}
           />
         </div>
 
@@ -476,6 +499,9 @@ export default function App() {
                   favorites={favorites}
                   selectedDay={selectedDay}
                   onSelectDay={(day) => setSelectedDay(day)}
+                  realTime={realTime}
+                  isSimulatingTime={isSimulatingTime}
+                  simulatedTime={simulatedTime}
                 />
               )}
 
@@ -485,6 +511,9 @@ export default function App() {
                   is24Hour={is24Hour}
                   onSelectFaculty={(fac) => setSelectedFaculty(fac)}
                   favorites={favorites}
+                  realTime={realTime}
+                  isSimulatingTime={isSimulatingTime}
+                  simulatedTime={simulatedTime}
                 />
               )}
 

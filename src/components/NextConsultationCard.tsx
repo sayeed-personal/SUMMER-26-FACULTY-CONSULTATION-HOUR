@@ -1,21 +1,86 @@
 import React from 'react';
 import { Calendar, MapPin, Hourglass, ArrowRight, Bell, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
-import { NextConsultationInfo } from '../utils/timeUtils';
-import { formatTimeString } from '../utils/timeUtils';
+import { Faculty, ScheduleSlot } from '../data/schedule';
+import { formatTimeString, JS_DAY_MAP, getSecondsDifference, timeToMinutes } from '../utils/timeUtils';
 
 interface NextConsultationCardProps {
-  nextConsultInfo: NextConsultationInfo | null;
   is24Hour: boolean;
   onSelectFaculty: (faculty: any) => void;
+  realTime: Date;
+  isSimulatingTime: boolean;
+  simulatedTime: { day: string; time: string };
+  faculties: Faculty[];
 }
 
 export const NextConsultationCard: React.FC<NextConsultationCardProps> = ({
-  nextConsultInfo,
   is24Hour,
-  onSelectFaculty
+  onSelectFaculty,
+  realTime,
+  isSimulatingTime,
+  simulatedTime,
+  faculties
 }) => {
-  if (!nextConsultInfo) {
+  // Calculate the absolute soonest upcoming consultation in real-time
+  const getRealTimeNextConsultation = () => {
+    let currentDayName = '';
+    let currentHours = 0;
+    let currentMinutes = 0;
+    const currentSeconds = realTime.getSeconds();
+
+    if (isSimulatingTime) {
+      currentDayName = simulatedTime.day;
+      const [h, m] = simulatedTime.time.split(':').map(Number);
+      currentHours = h;
+      currentMinutes = m;
+    } else {
+      currentDayName = JS_DAY_MAP[realTime.getDay()];
+      currentHours = realTime.getHours();
+      currentMinutes = realTime.getMinutes();
+    }
+
+    const currentDayIndex = JS_DAY_MAP.indexOf(currentDayName as any);
+    const currWeekSecs = currentDayIndex * 24 * 3600 + currentHours * 3600 + currentMinutes * 60 + currentSeconds;
+
+    let bestNext: { faculty: Faculty; slot: ScheduleSlot; secondsRemaining: number; dayDifference: number } | null = null;
+    let minDiff = Infinity;
+
+    for (const faculty of faculties) {
+      for (const slot of faculty.schedule) {
+        const slotDayIndex = JS_DAY_MAP.indexOf(slot.day);
+        if (slotDayIndex === -1) continue;
+        
+        const slotStartWeekSecs = slotDayIndex * 24 * 3600 + timeToMinutes(slot.startTime) * 60;
+        const slotEndWeekSecs = slotDayIndex * 24 * 3600 + timeToMinutes(slot.endTime) * 60;
+        
+        // Skip currently active ones
+        if (currWeekSecs >= slotStartWeekSecs && currWeekSecs < slotEndWeekSecs) {
+          continue;
+        }
+        
+        const diff = getSecondsDifference(currWeekSecs, slotStartWeekSecs);
+        if (diff < minDiff) {
+          minDiff = diff;
+          
+          let dayDiff = slotDayIndex - currentDayIndex;
+          if (dayDiff < 0) dayDiff += 7;
+          
+          bestNext = {
+            faculty,
+            slot,
+            secondsRemaining: diff,
+            dayDifference: dayDiff
+          };
+        }
+      }
+    }
+
+    return bestNext;
+  };
+
+  const nextConsult = getRealTimeNextConsultation();
+
+  if (!nextConsult) {
     return (
       <div className="glass-panel-heavy rounded-3xl p-6 border border-slate-200/60 dark:border-zinc-800/60 shadow-lg relative overflow-hidden h-full flex flex-col justify-between glow-blue">
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-400 to-indigo-500" />
@@ -32,7 +97,7 @@ export const NextConsultationCard: React.FC<NextConsultationCardProps> = ({
               No Upcoming Slots Found
             </p>
             <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">
-              Add schedules in schedule.json to load consultations.
+              Check back later for active schedules.
             </p>
           </div>
         </div>
@@ -40,24 +105,32 @@ export const NextConsultationCard: React.FC<NextConsultationCardProps> = ({
     );
   }
 
-  const { faculty, slot, minutesRemaining, startsToday, dayDifference } = nextConsultInfo;
+  const { faculty, slot, secondsRemaining, dayDifference } = nextConsult;
 
-  // Format the remaining time nicely
+  // Format countdown nicely
   const formatCountdown = () => {
-    if (minutesRemaining < 60) {
-      return `Starts in ${minutesRemaining} minute${minutesRemaining === 1 ? '' : 's'}`;
+    if (secondsRemaining < 60) {
+      return `Starts in ${secondsRemaining} Seconds`;
     }
     
-    const hours = Math.floor(minutesRemaining / 60);
-    const mins = minutesRemaining % 60;
-    
+    const minutes = Math.floor(secondsRemaining / 60);
+    const secs = secondsRemaining % 60;
+
+    if (minutes < 60) {
+      return `Starts in ${minutes} Minute${minutes === 1 ? '' : 's'} ${secs}s`;
+    }
+
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+
     if (hours < 24) {
-      return `Starts in ${hours} hr${hours === 1 ? '' : 's'} ${mins > 0 ? `${mins} m` : ''}`;
+      return `Starts in ${hours} Hour${hours === 1 ? '' : 's'} ${mins}m ${secs}s`;
     }
-    
+
     const days = Math.floor(hours / 24);
-    const remainingHrs = hours % 24;
-    return `Starts in ${days} day${days === 1 ? '' : 's'} ${remainingHrs > 0 ? `${remainingHrs} hr` : ''}`;
+    const remHrs = hours % 24;
+
+    return `Starts in ${days} Day${days === 1 ? '' : 's'} ${remHrs} Hour${remHrs === 1 ? '' : 's'} ${mins}m`;
   };
 
   // Label relative day
@@ -77,21 +150,22 @@ export const NextConsultationCard: React.FC<NextConsultationCardProps> = ({
           <div className="flex items-center gap-2">
             <Bell className="w-4 h-4 text-blue-500 animate-swing" />
             <h2 className="text-sm font-mono font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
-              Upcoming Slot
+              Next Consultation
             </h2>
           </div>
           <span className="text-xs bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold px-2.5 py-0.5 rounded-full border border-blue-500/10 flex items-center gap-1">
-            <Hourglass className="w-3 h-3 text-blue-500" />
+            <Hourglass className="w-3 h-3 text-blue-500 animate-pulse" />
             Active Alert
           </span>
         </div>
 
         {/* Big countdown display */}
         <div className="mb-4">
-          <p className="text-[11px] font-mono font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
+          <p className="text-[10px] font-mono font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
             Countdown Timer
           </p>
-          <h3 className="text-2xl font-display font-black text-slate-950 dark:text-zinc-50 tracking-tight leading-tight mt-1">
+          <h3 className="text-xl font-display font-black text-slate-950 dark:text-zinc-50 tracking-tight leading-tight mt-1 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
             {formatCountdown()}
           </h3>
         </div>
@@ -107,6 +181,9 @@ export const NextConsultationCard: React.FC<NextConsultationCardProps> = ({
               <h4 className="font-display font-black text-base text-slate-800 dark:text-zinc-250">
                 {faculty.name} ({faculty.initial})
               </h4>
+              <p className="text-xs text-slate-400 font-mono mt-0.5">
+                Course: {faculty.courses.join(', ')}
+              </p>
             </div>
             
             <div className="w-10 h-10 rounded-xl bg-blue-600 dark:bg-blue-500 text-white flex items-center justify-center font-bold text-sm tracking-tight shadow-md">

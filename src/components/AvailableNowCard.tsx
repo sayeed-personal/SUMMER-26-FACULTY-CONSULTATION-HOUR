@@ -2,7 +2,7 @@ import React from 'react';
 import { Sparkles, MapPin, Mail, ArrowRight, Star, Copy, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Faculty, ScheduleSlot } from '../data/schedule';
-import { formatTimeString } from '../utils/timeUtils';
+import { formatTimeString, getFacultyStatusInfo } from '../utils/timeUtils';
 
 interface AvailableNowCardProps {
   availableFaculty: Array<{ faculty: Faculty; slot: ScheduleSlot }>;
@@ -10,6 +10,9 @@ interface AvailableNowCardProps {
   onSelectFaculty: (faculty: Faculty) => void;
   favorites: string[];
   onToggleFavorite: (id: string, e: React.MouseEvent) => void;
+  realTime: Date;
+  isSimulatingTime: boolean;
+  simulatedTime: { day: string; time: string };
 }
 
 export const AvailableNowCard: React.FC<AvailableNowCardProps> = ({
@@ -17,7 +20,10 @@ export const AvailableNowCard: React.FC<AvailableNowCardProps> = ({
   is24Hour,
   onSelectFaculty,
   favorites,
-  onToggleFavorite
+  onToggleFavorite,
+  realTime,
+  isSimulatingTime,
+  simulatedTime
 }) => {
   const [copiedId, setCopiedId] = React.useState<string | null>(null);
 
@@ -50,7 +56,7 @@ export const AvailableNowCard: React.FC<AvailableNowCardProps> = ({
         </div>
 
         <h3 className="text-xl font-display font-bold tracking-tight text-slate-800 dark:text-zinc-50 mb-4">
-          Active Consultations
+          Faculty Available Right Now
         </h3>
 
         <div className="space-y-3.5 max-h-[300px] overflow-y-auto pr-1 no-scrollbar">
@@ -60,11 +66,11 @@ export const AvailableNowCard: React.FC<AvailableNowCardProps> = ({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="text-center py-8 px-4 border border-dashed border-slate-200 dark:border-zinc-800/80 rounded-2xl bg-slate-50/50 dark:bg-zinc-900/10"
+                className="text-center py-8 px-4 border border-dashed border-slate-200 dark:border-zinc-800/80 rounded-2xl bg-slate-50/50 dark:bg-zinc-900/10 animate-fade-in"
               >
                 <Sparkles className="w-8 h-8 mx-auto text-slate-300 dark:text-zinc-600 mb-2" />
                 <p className="text-sm font-semibold text-slate-600 dark:text-zinc-400">
-                  No Active Sessions
+                  No faculty is currently in consultation.
                 </p>
                 <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">
                   All faculty are currently teaching or preparing. Check the schedules below!
@@ -74,6 +80,13 @@ export const AvailableNowCard: React.FC<AvailableNowCardProps> = ({
               availableFaculty.map(({ faculty, slot }, idx) => {
                 const isFav = favorites.includes(faculty.id);
                 const copyKey = `${faculty.id}-room`;
+                
+                // Get absolute status details for the faculty
+                const statusInfo = getFacultyStatusInfo(faculty, realTime, isSimulatingTime, simulatedTime);
+                const minsLeft = Math.floor(statusInfo.secondsRemaining / 60);
+                const secsLeft = statusInfo.secondsRemaining % 60;
+                const countdownText = minsLeft > 0 ? `Ends in ${minsLeft} min` : `Ends in ${secsLeft} sec`;
+
                 return (
                   <motion.div
                     key={faculty.id}
@@ -84,6 +97,12 @@ export const AvailableNowCard: React.FC<AvailableNowCardProps> = ({
                     className="p-4 rounded-2xl bg-white/60 dark:bg-zinc-900/40 border border-slate-200/50 dark:border-zinc-800/40 hover:bg-slate-50 dark:hover:bg-zinc-900/80 transition-all duration-300 cursor-pointer shadow-xs flex items-center justify-between group"
                   >
                     <div className="flex items-center gap-3">
+                      {/* Active Status Ring Indicator */}
+                      <span className="relative flex h-3 w-3 flex-none">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                      </span>
+
                       {/* Prof Profile/Initials Badge */}
                       <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-display font-black text-sm tracking-wide shadow-md shadow-emerald-500/10">
                         {faculty.initial}
@@ -103,13 +122,16 @@ export const AvailableNowCard: React.FC<AvailableNowCardProps> = ({
                           </motion.button>
                         </div>
                         
-                        <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 dark:text-zinc-400">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-slate-500 dark:text-zinc-400">
                           <span className="flex items-center gap-1 text-[11px] font-mono font-medium">
                             <MapPin className="w-3 h-3 text-emerald-500" />
                             Room {faculty.room}
                           </span>
-                          <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded text-[10px] font-bold font-mono">
-                            Until {formatTimeString(slot.endTime, is24Hour)}
+                          <span className="font-mono bg-slate-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-[10px] font-bold text-slate-500">
+                            {faculty.courses.join(', ')}
+                          </span>
+                          <span className="bg-emerald-500/10 text-emerald-650 dark:text-emerald-400 px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono flex items-center gap-1 animate-pulse">
+                            {countdownText}
                           </span>
                         </div>
                       </div>
