@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, Settings, Download, Sun, Moon, CalendarRange } from 'lucide-react';
+import { Clock, Settings, Download, Sun, Moon, CalendarRange, Lock, Unlock } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface HeaderProps {
@@ -13,6 +13,9 @@ interface HeaderProps {
   isOffline?: boolean;
   availableCount: number;
   nextConsultationStr: string;
+  isAdminMode: boolean;
+  onLockAdmin: () => void;
+  onUnlockAdmin: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -25,7 +28,10 @@ export const Header: React.FC<HeaderProps> = ({
   onInstall,
   isOffline = false,
   availableCount,
-  nextConsultationStr
+  nextConsultationStr,
+  isAdminMode,
+  onLockAdmin,
+  onUnlockAdmin
 }) => {
   const [scrolled, setScrolled] = React.useState(false);
 
@@ -100,9 +106,26 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Action controls */}
           <div className="flex items-center gap-1 flex-none">
+            {isAdminMode ? (
+              <button
+                onClick={onLockAdmin}
+                className="p-1.5 rounded-lg text-emerald-500 hover:bg-emerald-500/10 dark:hover:bg-emerald-500/15 transition-colors cursor-pointer"
+                title="🔒 Lock Admin Mode"
+              >
+                <Unlock className="w-3.5 h-3.5" />
+              </button>
+            ) : (
+              <button
+                onClick={onUnlockAdmin}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-slate-100 dark:hover:bg-zinc-900 transition-colors cursor-pointer"
+                title="Unlock Admin Mode"
+              >
+                <Lock className="w-3.5 h-3.5" />
+              </button>
+            )}
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
-              className="p-1.5 rounded-lg text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-900"
+              className="p-1.5 rounded-lg text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-900 cursor-pointer"
               aria-label="Toggle dark mode"
             >
               {isDarkMode ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-indigo-600" />}
@@ -234,6 +257,31 @@ export const Header: React.FC<HeaderProps> = ({
             >
               {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-600" />}
             </motion.button>
+
+            {/* Admin Toggle */}
+            {isAdminMode ? (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onLockAdmin}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold text-xs hover:bg-rose-500/10 hover:border-rose-500/20 hover:text-rose-600 transition-all cursor-pointer shadow-xs"
+                title="Lock Admin Mode"
+              >
+                <Unlock className="w-3.5 h-3.5 animate-pulse text-emerald-500" />
+                <span className="hidden sm:inline">Admin Active</span>
+              </motion.button>
+            ) : (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onUnlockAdmin}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-100 dark:bg-zinc-800/80 text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 font-medium text-xs border border-slate-200/20 dark:border-zinc-800/20 hover:bg-slate-200 dark:hover:bg-zinc-700/80 transition-all cursor-pointer"
+                title="Unlock Admin Mode"
+              >
+                <Lock className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Unlock Admin</span>
+              </motion.button>
+            )}
 
             {/* Settings Trigger */}
             <motion.button

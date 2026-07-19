@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Copy, Check, Mail, Phone, ExternalLink, Calendar, MapPin, BookOpen, Star } from 'lucide-react';
+import { X, Copy, Check, Mail, Phone, ExternalLink, Calendar, MapPin, BookOpen, Star, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Faculty, DAY_COLORS } from '../data/schedule';
 import { formatTimeString, getDaySchedule, JS_DAY_MAP } from '../utils/timeUtils';
@@ -120,6 +120,13 @@ export const FacultyDetailModal: React.FC<FacultyDetailModalProps> = ({
                     {copiedRoom ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3 text-slate-400" />}
                   </button>
 
+                  {faculty.office && (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 text-xs font-semibold text-slate-650 dark:text-zinc-350 bg-slate-55/40 dark:bg-zinc-950/40">
+                      <MapPin className="w-3.5 h-3.5 text-rose-500" />
+                      <span>Office: {faculty.office}</span>
+                    </div>
+                  )}
+
                   <button
                     onClick={handleCopyEmail}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 text-xs font-medium text-slate-600 dark:text-zinc-400 bg-slate-50/50 dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
@@ -159,6 +166,17 @@ export const FacultyDetailModal: React.FC<FacultyDetailModalProps> = ({
                 ))}
               </div>
             </div>
+
+            {/* Notes Segment */}
+            {faculty.notes && (
+              <div className="mb-6 p-4 rounded-2xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/10 dark:border-amber-500/20 text-xs">
+                <h4 className="font-mono font-bold text-amber-600 dark:text-amber-450 uppercase tracking-widest mb-1.5 flex items-center gap-1.5 text-[10px]">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  Faculty Notes
+                </h4>
+                <p className="leading-relaxed font-medium text-slate-700 dark:text-zinc-300 whitespace-pre-wrap">{faculty.notes}</p>
+              </div>
+            )}
 
             {/* Today's schedule focus */}
             <div className="mb-6 p-4 rounded-2xl bg-blue-500/5 border border-blue-500/10 dark:border-blue-500/10">

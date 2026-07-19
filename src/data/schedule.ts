@@ -17,6 +17,8 @@ export interface Faculty {
   disabled?: boolean;
   profileColor?: string;
   icon?: string;
+  office?: string;
+  notes?: string;
 }
 
 export const FALLBACK_SCHEDULES: Faculty[] = [

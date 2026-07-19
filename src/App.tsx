@@ -35,6 +35,16 @@ import {
 import { 
   FacultyManagementPanel 
 } from './components/FacultyManagementPanel';
+import {
+  AdminPasscodeModal
+} from './components/AdminPasscodeModal';
+import {
+  ActivityLogModal,
+  ActivityLogEntry
+} from './components/ActivityLogModal';
+import {
+  DEFAULT_ADMIN_PASSCODE
+} from './config/admin';
 
 import { 
   FALLBACK_SCHEDULES, 
@@ -51,7 +61,7 @@ import {
 } from './utils/timeUtils';
 
 import { motion, AnimatePresence } from 'motion/react';
-import { CalendarRange, Sparkles, SlidersHorizontal, Eye, Printer, FileDown, Search } from 'lucide-react';
+import { CalendarRange, Sparkles, SlidersHorizontal, Eye, Printer, FileDown, Search, RotateCcw, Trash2, X } from 'lucide-react';
 import { haptic } from './utils/haptic';
 
 export default function App() {
@@ -72,6 +82,157 @@ export default function App() {
   });
 
   const [isManagementOpen, setIsManagementOpen] = useState(false);
+  const [isActivityLogOpen, setIsActivityLogOpen] = useState(false);
+
+  // --- ACTIVITY LOG STATE & PERSISTENCE ---
+  const [activityLogs, setActivityLogs] = useState<ActivityLogEntry[]>(() => {
+    const saved = localStorage.getItem('brac_activity_logs');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('brac_activity_logs', JSON.stringify(activityLogs));
+  }, [activityLogs]);
+
+  const addActivityLog = (action: string, facultyName: string, details?: string) => {
+    const entry: ActivityLogEntry = {
+      id: `log_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      timestamp: new Date().toISOString(),
+      action,
+      facultyName,
+      details
+    };
+    setActivityLogs(prev => [entry, ...prev]);
+  };
+
+  // --- UNDO DELETE STATE & COOLDOWN ---
+  const [pendingDelete, setPendingDelete] = useState<{
+    faculty: Faculty;
+    index: number;
+    timestamp: number;
+  } | null>(() => {
+    const saved = localStorage.getItem('brac_pending_delete');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Date.now() - parsed.timestamp < 15000) {
+          return parsed;
+        }
+      } catch (e) {}
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    if (pendingDelete) {
+      localStorage.setItem('brac_pending_delete', JSON.stringify(pendingDelete));
+    } else {
+      localStorage.removeItem('brac_pending_delete');
+    }
+  }, [pendingDelete]);
+
+  useEffect(() => {
+    if (!pendingDelete) return;
+    const remaining = 15000 - (Date.now() - pendingDelete.timestamp);
+    if (remaining <= 0) {
+      setPendingDelete(null);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setPendingDelete(null);
+    }, remaining);
+    return () => clearTimeout(timer);
+  }, [pendingDelete]);
+
+  const handleDeleteFaculty = (id: string) => {
+    const index = faculties.findIndex(f => f.id === id);
+    if (index === -1) return;
+    const targetFaculty = faculties[index];
+    
+    // Save to pending delete
+    setPendingDelete({
+      faculty: targetFaculty,
+      index,
+      timestamp: Date.now()
+    });
+    
+    // Remove from faculties
+    const updated = faculties.filter(f => f.id !== id);
+    setFaculties(updated);
+    
+    // Add to activity log
+    addActivityLog('Faculty Deleted', targetFaculty.name);
+  };
+
+  const handleUndoDelete = () => {
+    if (!isAdminMode) {
+      showToast("❌ Admin mode is locked. Cannot undo.");
+      return;
+    }
+    if (pendingDelete) {
+      const { faculty, index } = pendingDelete;
+      setFaculties(prev => {
+        const copy = [...prev];
+        copy.splice(index, 0, faculty);
+        return copy;
+      });
+      addActivityLog('Faculty Restored (Undo)', faculty.name);
+      setPendingDelete(null);
+      showToast(`Restored ${faculty.name} successfully!`);
+    }
+  };
+
+  // --- ADMIN MODE STATE ---
+  const [savedPasscode, setSavedPasscode] = useState<string>(() => {
+    const saved = localStorage.getItem('brac_admin_passcode');
+    return saved || DEFAULT_ADMIN_PASSCODE;
+  });
+
+  const [isAdminMode, setIsAdminMode] = useState<boolean>(() => {
+    return sessionStorage.getItem('brac_is_admin_mode') === 'true';
+  });
+
+  const [isAdminUnlockOpen, setIsAdminUnlockOpen] = useState(false);
+  const [onAdminSuccessAction, setOnAdminSuccessAction] = useState<(() => void) | null>(null);
+
+  const handleUnlockAdminSuccess = () => {
+    setIsAdminMode(true);
+    sessionStorage.setItem('brac_is_admin_mode', 'true');
+    setIsAdminUnlockOpen(false);
+    showToast('🔓 Admin Mode unlocked successfully!');
+    if (onAdminSuccessAction) {
+      onAdminSuccessAction();
+      setOnAdminSuccessAction(null);
+    }
+  };
+
+  const handleLockAdmin = () => {
+    setIsAdminMode(false);
+    sessionStorage.removeItem('brac_is_admin_mode');
+    showToast('🔒 Admin Mode locked.');
+    haptic.medium();
+  };
+
+  const requireAdminMode = (action: () => void) => {
+    if (isAdminMode) {
+      action();
+    } else {
+      setOnAdminSuccessAction(() => action);
+      setIsAdminUnlockOpen(true);
+    }
+  };
+
+  const handleSaveNewPasscode = (newPasscode: string) => {
+    setSavedPasscode(newPasscode);
+    localStorage.setItem('brac_admin_passcode', newPasscode);
+  };
   
   // App preferences
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
@@ -111,7 +272,8 @@ export default function App() {
 
   // Interactive Overlays
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [selectedFaculty, setSelectedFaculty] = useState<Faculty | null>(null);
+  const [selectedFacultyId, setSelectedFacultyId] = useState<string | null>(null);
+  const selectedFaculty = faculties.find(f => f.id === selectedFacultyId) || null;
 
   // Search and Filter Board States
   const [searchQuery, setSearchQuery] = useState('');
@@ -301,17 +463,21 @@ export default function App() {
   };
 
   const handleResetData = () => {
-    if (window.confirm('Reset app preferences, pinned favorites, and recent searches?')) {
-      setFavorites([]);
-      setSearchQuery('');
-      setSelectedFacultyFilter([]);
-      setShowOnlyFavorites(false);
-      localStorage.clear();
-      setFaculties(FALLBACK_SCHEDULES);
-      setIsDarkMode(true);
-      setIs24Hour(false);
-      setIsSettingsOpen(false);
-    }
+    requireAdminMode(() => {
+      if (window.confirm('Reset app preferences, pinned favorites, and recent searches?')) {
+        setFavorites([]);
+        setSearchQuery('');
+        setSelectedFacultyFilter([]);
+        setShowOnlyFavorites(false);
+        localStorage.clear();
+        setFaculties(FALLBACK_SCHEDULES);
+        setIsDarkMode(true);
+        setIs24Hour(false);
+        setIsSettingsOpen(false);
+        setIsAdminMode(false);
+        sessionStorage.removeItem('brac_is_admin_mode');
+      }
+    });
   };
 
   const handleInstallPWA = () => {
@@ -451,8 +617,10 @@ export default function App() {
   const handleSelectFaculty = (fac: Faculty | null) => {
     if (fac) {
       haptic.light();
+      setSelectedFacultyId(fac.id);
+    } else {
+      setSelectedFacultyId(null);
     }
-    setSelectedFaculty(fac);
   };
 
   // --- REAL-TIME STATUS VALUES FOR HEADER AND CARDS ---
@@ -488,6 +656,9 @@ export default function App() {
         isOffline={isOffline}
         availableCount={availableCount}
         nextConsultationStr={nextConsultationStr}
+        isAdminMode={isAdminMode}
+        onLockAdmin={handleLockAdmin}
+        onUnlockAdmin={() => requireAdminMode(() => {})}
       />
 
       {/* Primary Container */}
@@ -506,7 +677,7 @@ export default function App() {
           <AvailableNowCard
             availableFaculty={activeConsultationsNow}
             is24Hour={is24Hour}
-            onSelectFaculty={(fac) => setSelectedFaculty(fac)}
+            onSelectFaculty={handleSelectFaculty}
             favorites={favorites}
             onToggleFavorite={handleToggleFavorite}
             realTime={realTime}
@@ -517,7 +688,7 @@ export default function App() {
           {/* Countdown module */}
           <NextConsultationCard
             is24Hour={is24Hour}
-            onSelectFaculty={(fac) => setSelectedFaculty(fac)}
+            onSelectFaculty={handleSelectFaculty}
             realTime={realTime}
             isSimulatingTime={isSimulatingTime}
             simulatedTime={simulatedTime}
@@ -672,7 +843,7 @@ export default function App() {
       <FacultyDetailModal
         faculty={selectedFaculty}
         isOpen={selectedFaculty !== null}
-        onClose={() => setSelectedFaculty(null)}
+        onClose={() => setSelectedFacultyId(null)}
         currentDay={appDay}
         is24Hour={is24Hour}
         favorites={favorites}
@@ -721,8 +892,15 @@ export default function App() {
         setSimulatedTime={setSimulatedTime}
         onOpenManagement={() => {
           setIsSettingsOpen(false);
-          setIsManagementOpen(true);
+          requireAdminMode(() => setIsManagementOpen(true));
         }}
+        onOpenActivityLog={() => setIsActivityLogOpen(true)}
+        isAdminMode={isAdminMode}
+        onLockAdmin={handleLockAdmin}
+        onUnlockAdmin={() => requireAdminMode(() => {})}
+        savedPasscode={savedPasscode}
+        onSaveNewPasscode={handleSaveNewPasscode}
+        showToast={showToast}
       />
 
       {/* Faculty Management Console */}
@@ -736,7 +914,74 @@ export default function App() {
           localStorage.setItem('brac_faculties', JSON.stringify(FALLBACK_SCHEDULES));
         }}
         showToast={showToast}
+        isAdminMode={isAdminMode}
+        onDeleteFaculty={handleDeleteFaculty}
+        addActivityLog={addActivityLog}
       />
+
+      {/* Activity Logs Console */}
+      <ActivityLogModal
+        isOpen={isActivityLogOpen}
+        onClose={() => setIsActivityLogOpen(false)}
+        logs={activityLogs}
+        onClearLogs={() => setActivityLogs([])}
+        isAdminMode={isAdminMode}
+      />
+
+      {/* Admin Unlock Passcode Dialog */}
+      <AdminPasscodeModal
+        isOpen={isAdminUnlockOpen}
+        onClose={() => {
+          setIsAdminUnlockOpen(false);
+          setOnAdminSuccessAction(null);
+        }}
+        onSuccess={handleUnlockAdminSuccess}
+        savedPasscode={savedPasscode}
+      />
+
+      {/* Undo Delete Notification Banner */}
+      <AnimatePresence>
+        {pendingDelete && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 50, scale: 0.95 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[90] w-[90%] max-w-md bg-white/85 dark:bg-zinc-900/85 backdrop-blur-xl border border-slate-200/50 dark:border-zinc-800/80 shadow-2xl rounded-2xl p-4 flex items-center justify-between gap-4"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/30 text-rose-500 border border-rose-100/50 dark:border-rose-900/35 flex items-center justify-center flex-none">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <h4 className="text-xs font-bold text-slate-850 dark:text-zinc-150 truncate">
+                  Deleted {pendingDelete.faculty.name}
+                </h4>
+                <p className="text-[10px] font-medium text-slate-450 dark:text-zinc-500 mt-0.5">
+                  Undo deletion within 15 seconds.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 flex-none">
+              <button
+                onClick={handleUndoDelete}
+                className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-display font-black text-[11px] shadow-md shadow-blue-500/10 cursor-pointer flex items-center gap-1 transition-colors"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Undo</span>
+              </button>
+              
+              <button
+                onClick={() => setPendingDelete(null)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
+                title="Dismiss"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Toast Notification HUD */}
       <AnimatePresence>

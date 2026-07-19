@@ -1,5 +1,5 @@
-import React from 'react';
-import { X, Clock, Eye, Trash2, ShieldAlert, Sparkles, Smartphone, Check, SlidersHorizontal, Users } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Clock, Eye, Trash2, ShieldAlert, Sparkles, Smartphone, Check, SlidersHorizontal, Users, Lock, Unlock, Key, History } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface SettingsModalProps {
@@ -17,6 +17,13 @@ interface SettingsModalProps {
   simulatedTime?: { day: string; time: string };
   setSimulatedTime?: (val: any) => void;
   onOpenManagement: () => void;
+  onOpenActivityLog: () => void;
+  isAdminMode: boolean;
+  onLockAdmin: () => void;
+  onUnlockAdmin: () => void;
+  savedPasscode: string;
+  onSaveNewPasscode: (newPasscode: string) => void;
+  showToast: (msg: string) => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -33,8 +40,38 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   setIsSimulatingTime,
   simulatedTime,
   setSimulatedTime,
-  onOpenManagement
+  onOpenManagement,
+  onOpenActivityLog,
+  isAdminMode,
+  onLockAdmin,
+  onUnlockAdmin,
+  savedPasscode,
+  onSaveNewPasscode,
+  showToast
 }) => {
+  const [currentPass, setCurrentPass] = useState('');
+  const [newPass, setNewPass] = useState('');
+  const [confirmPass, setConfirmPass] = useState('');
+
+  const handleSavePasscode = () => {
+    if (currentPass !== savedPasscode) {
+      showToast('❌ Current passcode is incorrect');
+      return;
+    }
+    if (!newPass.trim()) {
+      showToast('❌ New passcode cannot be empty');
+      return;
+    }
+    if (newPass !== confirmPass) {
+      showToast('❌ New passcodes do not match');
+      return;
+    }
+    onSaveNewPasscode(newPass);
+    setCurrentPass('');
+    setNewPass('');
+    setConfirmPass('');
+    showToast('🔑 Passcode updated successfully!');
+  };
   return (
     <AnimatePresence>
       {isOpen && (
@@ -226,56 +263,162 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   </div>
                 </div>
               )}
-
-              {/* Faculty Management Segment */}
-              <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/10 dark:border-blue-500/15 flex flex-col gap-3">
-                <div className="flex items-start gap-2.5">
-                  <Users className="w-4 h-4 text-blue-500 flex-none mt-0.5" />
-                  <div>
-                    <h4 className="text-sm font-semibold text-blue-600 dark:text-blue-400">
-                      Roster Management
-                    </h4>
-                    <p className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">
-                      Configure faculty instructors, update room assignments, and customize consulting slots.
-                    </p>
+                  {/* Faculty Management & Admin Sections */}
+              {!isAdminMode ? (
+                <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10 dark:border-amber-500/15 flex flex-col gap-2.5">
+                  <div className="flex items-start gap-2.5">
+                    <ShieldAlert className="w-4 h-4 text-amber-500 flex-none mt-0.5" />
+                    <div>
+                      <h4 className="text-sm font-semibold text-amber-600 dark:text-amber-450 flex items-center gap-1.5">
+                        <Lock className="w-4 h-4" />
+                        Read-Only Mode
+                      </h4>
+                      <p className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">
+                        Roster modifications, resets, and security credentials are locked. Unlock Admin Mode to make changes.
+                      </p>
+                    </div>
                   </div>
+                  <motion.button
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={onUnlockAdmin}
+                    className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-blue-500/15"
+                  >
+                    <Unlock className="w-3.5 h-3.5" />
+                    <span>Unlock Admin Mode</span>
+                  </motion.button>
                 </div>
+              ) : (
+                <>
+                  {/* Faculty Management Segment */}
+                  <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/10 dark:border-blue-500/15 flex flex-col gap-3">
+                    <div className="flex items-start gap-2.5">
+                      <Users className="w-4 h-4 text-blue-500 flex-none mt-0.5" />
+                      <div>
+                        <h4 className="text-sm font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
+                          <Unlock className="w-4 h-4" />
+                          Roster Management
+                        </h4>
+                        <p className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">
+                          Configure faculty instructors, update room assignments, and customize consulting slots.
+                        </p>
+                      </div>
+                    </div>
 
-                <motion.button
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
-                  onClick={onOpenManagement}
-                  className="w-full py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-blue-500/10"
-                >
-                  <Users className="w-3.5 h-3.5" />
-                  <span>Manage Faculty</span>
-                </motion.button>
-              </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <motion.button
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.99 }}
+                        onClick={onOpenManagement}
+                        className="py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-blue-500/10"
+                      >
+                        <Users className="w-3.5 h-3.5" />
+                        <span>Manage Faculty</span>
+                      </motion.button>
 
-              {/* Reset Segment */}
-              <div className="p-4 rounded-2xl bg-rose-500/5 border border-rose-500/10 dark:border-rose-500/15 flex flex-col gap-3">
-                <div className="flex items-start gap-2.5">
-                  <ShieldAlert className="w-4 h-4 text-rose-500 flex-none mt-0.5" />
-                  <div>
-                    <h4 className="text-sm font-semibold text-rose-600 dark:text-rose-450">
-                      Emergency Utilities
-                    </h4>
-                    <p className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">
-                      This will reset your pinned favorites and locally stored app cache.
-                    </p>
+                      <motion.button
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.99 }}
+                        onClick={onOpenActivityLog}
+                        className="py-2 px-3 rounded-xl bg-slate-900 hover:bg-black dark:bg-zinc-800 dark:hover:bg-zinc-750 text-white font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-md border border-slate-700/20"
+                      >
+                        <History className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Activity Log</span>
+                      </motion.button>
+                    </div>
                   </div>
-                </div>
 
-                <motion.button
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
-                  onClick={onResetData}
-                  className="w-full py-2 px-4 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-rose-500/10"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Reset App State</span>
-                </motion.button>
-              </div>
+                  {/* Admin Security Section */}
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-zinc-905 border border-slate-200/50 dark:border-zinc-800/80 flex flex-col gap-3">
+                    <div>
+                      <h4 className="text-sm font-semibold text-slate-800 dark:text-zinc-100 flex items-center gap-1.5">
+                        <Key className="w-4 h-4 text-emerald-500" />
+                        Admin Security Settings
+                      </h4>
+                      <p className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">
+                        Change the administrator passcode. Saved locally.
+                      </p>
+                    </div>
+
+                    <div className="space-y-2 pt-1">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-mono font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+                          Current Passcode
+                        </label>
+                        <input
+                          type="password"
+                          value={currentPass}
+                          onChange={(e) => setCurrentPass(e.target.value)}
+                          placeholder="••••"
+                          className="px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-950 border border-slate-200/80 dark:border-zinc-800 text-xs text-slate-800 dark:text-zinc-100 outline-none focus:border-blue-500 transition-colors"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] font-mono font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+                            New Passcode
+                          </label>
+                          <input
+                            type="password"
+                            value={newPass}
+                            onChange={(e) => setNewPass(e.target.value)}
+                            placeholder="••••"
+                            className="px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-950 border border-slate-200/80 dark:border-zinc-800 text-xs text-slate-800 dark:text-zinc-100 outline-none focus:border-blue-500 transition-colors"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] font-mono font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+                            Confirm New
+                          </label>
+                          <input
+                            type="password"
+                            value={confirmPass}
+                            onChange={(e) => setConfirmPass(e.target.value)}
+                            placeholder="••••"
+                            className="px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-950 border border-slate-200/80 dark:border-zinc-800 text-xs text-slate-800 dark:text-zinc-100 outline-none focus:border-blue-500 transition-colors"
+                          />
+                        </div>
+                      </div>
+
+                      <motion.button
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.99 }}
+                        onClick={handleSavePasscode}
+                        className="w-full mt-2 py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-blue-500/10"
+                      >
+                        <Key className="w-3.5 h-3.5" />
+                        <span>Save Passcode</span>
+                      </motion.button>
+                    </div>
+                  </div>
+
+                  {/* Reset Segment */}
+                  <div className="p-4 rounded-2xl bg-rose-500/5 border border-rose-500/10 dark:border-rose-500/15 flex flex-col gap-3">
+                    <div className="flex items-start gap-2.5">
+                      <ShieldAlert className="w-4 h-4 text-rose-500 flex-none mt-0.5" />
+                      <div>
+                        <h4 className="text-sm font-semibold text-rose-600 dark:text-rose-455">
+                          Emergency Utilities
+                        </h4>
+                        <p className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">
+                          This will reset your pinned favorites and locally stored app cache.
+                        </p>
+                      </div>
+                    </div>
+
+                    <motion.button
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      onClick={onResetData}
+                      className="w-full py-2 px-4 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-rose-500/10"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Reset App State</span>
+                    </motion.button>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Footer */}
