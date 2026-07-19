@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Clock, Eye, Trash2, ShieldAlert, Sparkles, Smartphone, Check } from 'lucide-react';
+import { X, Clock, Eye, Trash2, ShieldAlert, Sparkles, Smartphone, Check, SlidersHorizontal } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface SettingsModalProps {
@@ -12,6 +12,10 @@ interface SettingsModalProps {
   onResetData: () => void;
   installPrompt: any;
   onInstall: () => void;
+  isSimulatingTime?: boolean;
+  setIsSimulatingTime?: (val: boolean) => void;
+  simulatedTime?: { day: string; time: string };
+  setSimulatedTime?: (val: any) => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -23,7 +27,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   setIsDarkMode,
   onResetData,
   installPrompt,
-  onInstall
+  onInstall,
+  isSimulatingTime,
+  setIsSimulatingTime,
+  simulatedTime,
+  setSimulatedTime
 }) => {
   return (
     <AnimatePresence>
@@ -161,6 +169,59 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <Smartphone className="w-3.5 h-3.5" />
                     <span>Install</span>
                   </motion.button>
+                </div>
+              )}
+
+              {/* Simulation Segment (Developer Mode) */}
+              {setIsSimulatingTime && simulatedTime && setSimulatedTime && (
+                <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10 dark:border-amber-500/15 flex flex-col gap-3">
+                  <div>
+                    <h4 className="text-sm font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                      <SlidersHorizontal className="w-4 h-4 text-amber-500" />
+                      Academic Simulation Mode
+                    </h4>
+                    <p className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">
+                      Simulate different schedules to test active slots and countdowns.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => setIsSimulatingTime(!isSimulatingTime)}
+                      className={`w-full py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        isSimulatingTime
+                          ? 'bg-amber-500 text-white shadow-md shadow-amber-500/10'
+                          : 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-700'
+                      }`}
+                    >
+                      {isSimulatingTime ? '🔴 Simulation Active' : '⚪ Run System Time'}
+                    </button>
+
+                    {isSimulatingTime && (
+                      <div className="flex items-center justify-between gap-2 bg-slate-50 dark:bg-zinc-950 p-2 rounded-xl border border-slate-200 dark:border-zinc-800">
+                        {/* Day selector */}
+                        <select
+                          value={simulatedTime.day}
+                          onChange={(e) => setSimulatedTime((prev: any) => ({ ...prev, day: e.target.value }))}
+                          className="bg-transparent text-xs font-bold font-mono py-1 px-2 border-none outline-none text-slate-700 dark:text-zinc-300 w-1/2 cursor-pointer"
+                        >
+                          {['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'].map(day => (
+                            <option key={day} value={day} className="dark:bg-zinc-900">{day}</option>
+                          ))}
+                        </select>
+
+                        <span className="text-slate-300 dark:text-zinc-800">|</span>
+
+                        {/* Hour picker */}
+                        <input
+                          type="time"
+                          value={simulatedTime.time}
+                          onChange={(e) => setSimulatedTime((prev: any) => ({ ...prev, time: e.target.value }))}
+                          className="bg-transparent text-xs font-bold font-mono py-1 px-2 border-none outline-none text-slate-700 dark:text-zinc-300 w-1/2 cursor-pointer"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 

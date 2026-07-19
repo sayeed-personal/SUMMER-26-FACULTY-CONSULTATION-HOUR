@@ -139,25 +139,25 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                           key={faculty.id}
                           whileHover={{ scale: 1.015, y: -2 }}
                           onClick={() => onSelectFaculty(faculty)}
-                          className={`p-5 rounded-2xl glass-panel border hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col justify-between group shadow-sm ${
+                          className={`p-3.5 rounded-xl glass-panel border hover:shadow-md transition-all duration-300 cursor-pointer flex flex-col justify-between group shadow-sm ${
                             isLive
-                              ? 'border-emerald-500/55 dark:border-emerald-500/40 shadow-lg shadow-emerald-500/5 ring-1 ring-emerald-500/25 bg-emerald-50/5 dark:bg-emerald-950/5'
+                              ? 'border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.18)] dark:border-emerald-500/60 dark:shadow-[0_0_20px_rgba(16,185,129,0.15)] bg-emerald-50/5 dark:bg-emerald-950/5'
                               : 'border-slate-200/65 dark:border-zinc-800/50 hover:border-blue-500/30'
                           }`}
                         >
                           <div>
-                            <div className="flex items-start justify-between gap-3 mb-4">
+                            <div className="flex items-start justify-between gap-3 mb-2.5">
                               <div className="flex items-center gap-3">
                                 <div className="relative">
-                                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-white font-display font-black text-sm shadow-md ${
+                                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-display font-black text-xs shadow-md ${
                                     isLive ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : 'bg-gradient-to-br from-blue-500 to-indigo-600'
                                   }`}>
                                     {faculty.initial}
                                   </div>
                                   {isLive && (
-                                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                    <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
                                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                      <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border border-white dark:border-zinc-900"></span>
+                                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 border border-white dark:border-zinc-900"></span>
                                     </span>
                                   )}
                                 </div>
@@ -172,12 +172,12 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                               </div>
                             </div>
 
-                            <hr className="border-slate-100 dark:border-zinc-800/70 mb-4" />
+                            <hr className="border-slate-100 dark:border-zinc-800/70 mb-2.5" />
 
-                            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                            <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
                               {/* Location */}
-                              <div className="flex items-center gap-2 text-slate-600 dark:text-zinc-300 font-semibold font-mono">
-                                <MapPin className="w-4 h-4 text-emerald-500" />
+                              <div className="flex items-center gap-1.5 text-slate-600 dark:text-zinc-300 font-semibold font-mono">
+                                <MapPin className="w-3.5 h-3.5 text-emerald-500" />
                                 <span>Room {faculty.room}</span>
                                 <button
                                   onClick={(e) => copyToClipboard(faculty.room, copyKey, e)}
@@ -185,15 +185,15 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                                   title="Copy room number"
                                 >
                                   {copiedId === copyKey ? (
-                                    <Check className="w-3.5 h-3.5 text-emerald-500" />
+                                    <Check className="w-3 h-3 text-emerald-500" />
                                   ) : (
-                                    <Copy className="w-3.5 h-3.5" />
+                                    <Copy className="w-3 h-3" />
                                   )}
                                 </button>
                               </div>
 
                               {/* Duration info */}
-                              <div className="flex items-center gap-1.5 font-semibold text-slate-500 dark:text-zinc-400 font-mono">
+                              <div className="flex items-center gap-1 font-semibold text-slate-500 dark:text-zinc-400 font-mono">
                                 <Clock className="w-3.5 h-3.5 text-blue-500" />
                                 <span>{slot.startTime} – {slot.endTime}</span>
                               </div>
@@ -201,7 +201,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                           </div>
 
                           {/* Premium Real-Time Status HUD */}
-                          <div className="mt-4 p-2.5 rounded-xl bg-slate-50/70 dark:bg-zinc-900/50 border border-slate-150 dark:border-zinc-800/40 flex flex-col gap-1.5 text-[10px] font-mono">
+                          <div className="mt-2.5 p-2 rounded-lg bg-slate-50/70 dark:bg-zinc-900/50 border border-slate-150 dark:border-zinc-800/40 flex flex-col gap-1 text-[10px] font-mono">
                             <div className="flex items-center justify-between">
                               <span className="text-slate-400 dark:text-zinc-500 uppercase font-bold tracking-wider">Status</span>
                               <span className={`font-black flex items-center gap-1 uppercase tracking-wide ${
@@ -237,7 +237,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                             </div>
                           </div>
 
-                          <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 dark:border-zinc-800/60">
+                          <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-100 dark:border-zinc-800/60">
                             {/* Course affiliations */}
                             <div className="flex gap-1">
                               {faculty.courses.slice(0, 2).map(c => (

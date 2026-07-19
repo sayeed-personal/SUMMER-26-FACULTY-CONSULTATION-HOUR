@@ -27,6 +27,16 @@ export const Header: React.FC<HeaderProps> = ({
   availableCount,
   nextConsultationStr
 }) => {
+  const [scrolled, setScrolled] = React.useState(false);
+
+  React.useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 40);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   // Format live time string
   const formatTime = () => {
     const hours = currentTime.getHours();
@@ -52,6 +62,63 @@ export const Header: React.FC<HeaderProps> = ({
       day: 'numeric'
     });
   };
+
+  if (scrolled) {
+    return (
+      <header className="sticky top-0 z-40 w-full glass-panel border-b border-slate-200/50 dark:border-zinc-800/50 px-4 md:px-8 py-2 md:py-2.5 shadow-sm transition-all duration-300">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+          {/* Branding */}
+          <div className="flex items-center gap-2 min-w-0">
+            <CalendarRange className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-none" />
+            <h1 className="text-xs md:text-sm font-display font-extrabold tracking-tight text-slate-900 dark:text-zinc-50 truncate">
+              BRAC Consultation Planner
+            </h1>
+          </div>
+
+          {/* Minimal stats row */}
+          <div className="flex items-center gap-2 md:gap-3 text-[10px] font-mono font-bold">
+            {/* Clock */}
+            <div className="flex items-center gap-1 bg-slate-100/60 dark:bg-zinc-900/60 border border-slate-200/20 dark:border-zinc-800/20 px-2 py-1 rounded-lg text-slate-700 dark:text-zinc-300">
+              <Clock className="w-3 h-3 text-blue-500" />
+              <span>{formatTime().split(' ')[0]}</span>
+            </div>
+
+            {/* Available */}
+            <div className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-1 rounded-lg border border-emerald-500/10">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+              </span>
+              <span>{availableCount} Live</span>
+            </div>
+
+            {/* Next */}
+            <div className="hidden sm:flex items-center gap-1 bg-blue-500/5 text-blue-600 dark:text-blue-400 border border-blue-500/10 px-2 py-1 rounded-lg max-w-[120px] md:max-w-none truncate">
+              <span>Next: {nextConsultationStr}</span>
+            </div>
+          </div>
+
+          {/* Action controls */}
+          <div className="flex items-center gap-1 flex-none">
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className="p-1.5 rounded-lg text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-900"
+              aria-label="Toggle dark mode"
+            >
+              {isDarkMode ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-indigo-600" />}
+            </button>
+            <button
+              onClick={onOpenSettings}
+              className="p-1.5 rounded-lg text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-900"
+              aria-label="Open Preferences"
+            >
+              <Settings className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header className="sticky top-0 z-40 w-full glass-panel border-b border-slate-200/50 dark:border-zinc-800/50 px-4 md:px-8 py-3 md:py-4 transition-all duration-300">

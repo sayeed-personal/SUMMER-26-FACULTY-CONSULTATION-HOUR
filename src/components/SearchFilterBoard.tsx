@@ -94,6 +94,7 @@ export const SearchFilterBoard: React.FC<SearchFilterBoardProps> = ({
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
           <input
+            id="search-input"
             type="text"
             placeholder="Search by faculty initials, full name, room code, or course codes..."
             value={searchQuery}

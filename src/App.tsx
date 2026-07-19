@@ -47,7 +47,8 @@ import {
 } from './utils/timeUtils';
 
 import { motion, AnimatePresence } from 'motion/react';
-import { CalendarRange, Sparkles, SlidersHorizontal, Eye, Printer, FileDown } from 'lucide-react';
+import { CalendarRange, Sparkles, SlidersHorizontal, Eye, Printer, FileDown, Search } from 'lucide-react';
+import { haptic } from './utils/haptic';
 
 export default function App() {
   // --- STATE ---
@@ -250,6 +251,7 @@ export default function App() {
   // --- ACTIONS ---
   const handleToggleFavorite = (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    haptic.success();
     setFavorites(prev => {
       if (prev.includes(id)) {
         return prev.filter(item => item !== id);
@@ -298,6 +300,36 @@ export default function App() {
     downloadAnchor.remove();
   };
 
+  // --- FLOATING ACTION BUTTON HANDLERS ---
+  const handleFloatingSearch = () => {
+    haptic.medium();
+    const inputEl = document.getElementById('search-input');
+    if (inputEl) {
+      inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => inputEl.focus(), 300);
+    }
+  };
+
+  const handleGoToToday = () => {
+    haptic.medium();
+    setActiveTab('timeline');
+    const timelineEl = document.getElementById('timeline-section');
+    if (timelineEl) {
+      timelineEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      setTimeout(() => {
+        document.getElementById('timeline-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  };
+
+  const handleSelectFaculty = (fac: Faculty | null) => {
+    if (fac) {
+      haptic.light();
+    }
+    setSelectedFaculty(fac);
+  };
+
   // --- REAL-TIME STATUS VALUES FOR HEADER AND CARDS ---
   const facultiesStatus = faculties.map(f => getFacultyStatusInfo(f, realTime, isSimulatingTime, simulatedTime));
   const availableCount = facultiesStatus.filter(info => info.status === 'live').length;
@@ -334,61 +366,8 @@ export default function App() {
       />
 
       {/* Primary Container */}
-      <main className="max-w-7xl w-full mx-auto p-4 md:p-8 flex-1">
+      <main className="max-w-7xl w-full mx-auto p-3.5 md:p-8 flex-1">
         
-        {/* Dynamic Simulation Bar (Aesthetic Override Panel) */}
-        <div className="mb-6 p-4 rounded-2xl glass-panel-heavy border border-slate-200/60 dark:border-zinc-800/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <SlidersHorizontal className="w-5 h-5 text-blue-500" />
-            <div>
-              <h3 className="font-display font-bold text-sm text-slate-800 dark:text-zinc-100">
-                Academic Simulation Controls
-              </h3>
-              <p className="text-[11px] text-slate-450 dark:text-zinc-500">
-                Simulate different university schedules to test active slots, count-downs, and calendar lines.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={() => setIsSimulatingTime(!isSimulatingTime)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                isSimulatingTime
-                  ? 'bg-amber-500 text-white shadow-xs'
-                  : 'bg-slate-100 dark:bg-zinc-850 text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-800'
-              }`}
-            >
-              {isSimulatingTime ? '🔴 Override Active' : '⚪ Run System Time'}
-            </button>
-
-            {isSimulatingTime && (
-              <div className="flex items-center gap-2 bg-slate-100 dark:bg-zinc-950 p-1 rounded-xl border border-slate-200 dark:border-zinc-800">
-                {/* Day selector */}
-                <select
-                  value={simulatedTime.day}
-                  onChange={(e) => setSimulatedTime(prev => ({ ...prev, day: e.target.value }))}
-                  className="bg-transparent text-xs font-bold font-mono py-1 px-2 border-none outline-none text-slate-700 dark:text-zinc-300"
-                >
-                  {JS_DAY_MAP.filter(d => d !== 'Friday').map(day => (
-                    <option key={day} value={day} className="dark:bg-zinc-900">{day}</option>
-                  ))}
-                </select>
-
-                <span className="text-slate-300 dark:text-zinc-700">|</span>
-
-                {/* Hour picker */}
-                <input
-                  type="time"
-                  value={simulatedTime.time}
-                  onChange={(e) => setSimulatedTime(prev => ({ ...prev, time: e.target.value }))}
-                  className="bg-transparent text-xs font-bold font-mono py-1 px-2 border-none outline-none text-slate-700 dark:text-zinc-300"
-                />
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* Real-time stats widgets */}
         <DashboardStats
           faculties={faculties}
@@ -446,7 +425,10 @@ export default function App() {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
+                  onClick={() => {
+                    haptic.light();
+                    setActiveTab(tab.id as any);
+                  }}
                   className={`relative py-2.5 px-4 rounded-xl text-xs font-black tracking-tight transition-all cursor-pointer truncate ${
                     isActive
                       ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-50 shadow-xs scale-[1.01]'
@@ -482,7 +464,7 @@ export default function App() {
         </div>
 
         {/* Main Content Area showing active view tab */}
-        <div className="relative mt-2 min-h-[400px]">
+        <div id="timeline-section" className="relative mt-2 min-h-[400px]">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -495,7 +477,7 @@ export default function App() {
                 <TimelineView
                   faculties={filteredFaculties}
                   is24Hour={is24Hour}
-                  onSelectFaculty={(fac) => setSelectedFaculty(fac)}
+                  onSelectFaculty={handleSelectFaculty}
                   favorites={favorites}
                   selectedDay={selectedDay}
                   onSelectDay={(day) => setSelectedDay(day)}
@@ -509,7 +491,7 @@ export default function App() {
                 <WeeklyPlannerView
                   faculties={filteredFaculties}
                   is24Hour={is24Hour}
-                  onSelectFaculty={(fac) => setSelectedFaculty(fac)}
+                  onSelectFaculty={handleSelectFaculty}
                   favorites={favorites}
                   realTime={realTime}
                   isSimulatingTime={isSimulatingTime}
@@ -521,7 +503,7 @@ export default function App() {
                 <WeeklyCalendarView
                   faculties={filteredFaculties}
                   is24Hour={is24Hour}
-                  onSelectFaculty={(fac) => setSelectedFaculty(fac)}
+                  onSelectFaculty={handleSelectFaculty}
                   currentDay={appDay}
                   currentTimeStr={appTimeStr}
                 />
@@ -531,7 +513,7 @@ export default function App() {
                 <RoomFinder
                   faculties={filteredFaculties}
                   is24Hour={is24Hour}
-                  onSelectFaculty={(fac) => setSelectedFaculty(fac)}
+                  onSelectFaculty={handleSelectFaculty}
                   currentDay={appDay}
                 />
               )}
@@ -572,6 +554,31 @@ export default function App() {
         onToggleFavorite={(id) => handleToggleFavorite(id)}
       />
 
+      {/* Floating Action Buttons */}
+      <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-3">
+        {/* Today Button */}
+        <motion.button
+          whileHover={{ scale: 1.05, y: -2 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleGoToToday}
+          className="flex items-center gap-1.5 px-4 py-3 rounded-full bg-blue-600 dark:bg-blue-500 text-white font-display font-black text-xs shadow-lg shadow-blue-500/20 backdrop-blur-md cursor-pointer border border-blue-500/35"
+        >
+          <span>📍</span>
+          <span>Today</span>
+        </motion.button>
+
+        {/* Search Button */}
+        <motion.button
+          whileHover={{ scale: 1.05, y: -2 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleFloatingSearch}
+          className="flex items-center justify-center w-12 h-12 rounded-full bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200/80 dark:border-zinc-800/80 shadow-lg cursor-pointer"
+          aria-label="Quick Search"
+        >
+          <Search className="w-5 h-5" />
+        </motion.button>
+      </div>
+
       {/* Pref Settings Modal */}
       <SettingsModal
         isOpen={isSettingsOpen}
@@ -583,6 +590,10 @@ export default function App() {
         onResetData={handleResetData}
         installPrompt={installPrompt}
         onInstall={handleInstallPWA}
+        isSimulatingTime={isSimulatingTime}
+        setIsSimulatingTime={setIsSimulatingTime}
+        simulatedTime={simulatedTime}
+        setSimulatedTime={setSimulatedTime}
       />
 
     </div>
