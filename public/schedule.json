@@ -1,0 +1,88 @@
+[
+  {
+    "id": "maf",
+    "name": "MD Asif",
+    "initial": "MAF",
+    "department": "Computer Science & Engineering",
+    "courses": ["CSE111"],
+    "room": "4F",
+    "email": "mumit.faruque@bracu.ac.bd",
+    "schedule": [
+      { "day": "Sunday", "startTime": "09:30", "endTime": "10:50", "byAppointment": false },
+      { "day": "Sunday", "startTime": "11:00", "endTime": "12:20", "byAppointment": false },
+      { "day": "Monday", "startTime": "08:00", "endTime": "09:20", "byAppointment": false },
+      { "day": "Monday", "startTime": "09:30", "endTime": "10:50", "byAppointment": false },
+      { "day": "Wednesday", "startTime": "08:00", "endTime": "09:20", "byAppointment": false },
+      { "day": "Wednesday", "startTime": "09:30", "endTime": "10:50", "byAppointment": false }
+    ]
+  },
+  {
+    "id": "rkbm",
+    "name": "Mohammad Rakibul Hasan Mahin",
+    "initial": "RKBM",
+    "department": "Computer Science & Engineering",
+    "courses": ["CSE111"],
+    "room": "4M128",
+    "email": "rashed.kibria@bracu.ac.bd",
+    "schedule": [
+      { "day": "Sunday", "startTime": "11:00", "endTime": "12:20", "byAppointment": false },
+      { "day": "Sunday", "startTime": "12:30", "endTime": "13:50", "byAppointment": false },
+      { "day": "Tuesday", "startTime": "12:30", "endTime": "13:50", "byAppointment": false },
+      { "day": "Thursday", "startTime": "11:00", "endTime": "12:20", "byAppointment": false },
+      { "day": "Thursday", "startTime": "12:30", "endTime": "13:50", "byAppointment": false },
+      { "day": "Thursday", "startTime": "14:00", "endTime": "15:20", "byAppointment": false }
+    ]
+  },
+  {
+    "id": "afe",
+    "name": "AFE (MAT120 Faculty)",
+    "initial": "AFE",
+    "department": "Mathematics & Natural Sciences",
+    "courses": ["MAT120"],
+    "room": "4G-44",
+    "email": "ferdaus.elahi@bracu.ac.bd",
+    "schedule": [
+      { "day": "Sunday", "startTime": "11:00", "endTime": "12:15", "byAppointment": false },
+      { "day": "Monday", "startTime": "11:00", "endTime": "12:15", "byAppointment": false },
+      { "day": "Tuesday", "startTime": "11:00", "endTime": "12:15", "byAppointment": false },
+      { "day": "Wednesday", "startTime": "11:00", "endTime": "12:15", "byAppointment": false }
+    ]
+  },
+  {
+    "id": "tbm",
+    "name": "Tabassum Taspya",
+    "initial": "TBM",
+    "department": "English & Humanities",
+    "courses": ["CHE101"],
+    "room": "4R212",
+    "email": "tasnim.mubashshir@bracu.ac.bd",
+    "schedule": [
+      { "day": "Saturday", "startTime": "09:50", "endTime": "10:50", "byAppointment": false },
+      { "day": "Saturday", "startTime": "11:00", "endTime": "13:00", "byAppointment": false },
+      { "day": "Saturday", "startTime": "15:30", "endTime": "16:50", "byAppointment": false },
+      { "day": "Monday", "startTime": "09:50", "endTime": "10:50", "byAppointment": false },
+      { "day": "Monday", "startTime": "11:00", "endTime": "13:00", "byAppointment": false },
+      { "day": "Wednesday", "startTime": "09:50", "endTime": "10:50", "byAppointment": false },
+      { "day": "Wednesday", "startTime": "11:00", "endTime": "13:00", "byAppointment": false },
+      { "day": "Thursday", "startTime": "09:50", "endTime": "10:50", "byAppointment": false },
+      { "day": "Thursday", "startTime": "11:00", "endTime": "13:00", "byAppointment": false }
+    ]
+  },
+  {
+    "id": "avb",
+    "name": "Avinandan Banerjee",
+    "initial": "AVB",
+    "department": "Mathematics & Natural Sciences",
+    "courses": ["CSE111"],
+    "room": "4M118",
+    "email": "amitabha.bose@bracu.ac.bd",
+    "schedule": [
+      { "day": "Saturday", "startTime": "14:00", "endTime": "15:20", "byAppointment": false },
+      { "day": "Sunday", "startTime": "14:00", "endTime": "15:20", "byAppointment": true },
+      { "day": "Monday", "startTime": "14:00", "endTime": "15:20", "byAppointment": true },
+      { "day": "Tuesday", "startTime": "14:00", "endTime": "15:20", "byAppointment": false },
+      { "day": "Wednesday", "startTime": "14:00", "endTime": "15:20", "byAppointment": false },
+      { "day": "Thursday", "startTime": "14:00", "endTime": "15:20", "byAppointment": false }
+    ]
+  }
+]

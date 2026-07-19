@@ -1,0 +1,6 @@
+{
+  "name": "BRAC Consultation Planner",
+  "description": "A premium, Apple-designed consultation planner for BRAC University students to track faculty consultation times, rooms, courses, and availability in real-time.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

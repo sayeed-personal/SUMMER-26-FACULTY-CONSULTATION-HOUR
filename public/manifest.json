@@ -1,0 +1,26 @@
+{
+  "short_name": "BRAC Planner",
+  "name": "BRAC Consultation Planner",
+  "description": "Apple-inspired offline-capable academic consultation scheduler for BRAC University.",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "background_color": "#0a0a0c",
+  "theme_color": "#0066cc",
+  "display": "standalone",
+  "orientation": "portrait"
+}
