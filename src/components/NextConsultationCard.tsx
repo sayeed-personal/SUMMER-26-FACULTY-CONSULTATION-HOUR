@@ -20,13 +20,13 @@ export const NextConsultationCard: React.FC<NextConsultationCardProps> = ({
   isSimulatingTime,
   simulatedTime,
   faculties
-}) => {
-  // Calculate the absolute soonest upcoming consultation in real-time
+ }) => {
+  // Calculate the absolute soonest consultation in real-time
   const getRealTimeNextConsultation = () => {
     let currentDayName = '';
     let currentHours = 0;
     let currentMinutes = 0;
-    const currentSeconds = realTime.getSeconds();
+    const currentSeconds = isSimulatingTime ? 0 : realTime.getSeconds();
 
     if (isSimulatingTime) {
       currentDayName = simulatedTime.day;
@@ -42,8 +42,9 @@ export const NextConsultationCard: React.FC<NextConsultationCardProps> = ({
     const currentDayIndex = JS_DAY_MAP.indexOf(currentDayName as any);
     const currWeekSecs = currentDayIndex * 24 * 3600 + currentHours * 3600 + currentMinutes * 60 + currentSeconds;
 
-    let bestNext: { faculty: Faculty; slot: ScheduleSlot; secondsRemaining: number; dayDifference: number } | null = null;
-    let minDiff = Infinity;
+    // First, look for any live sessions
+    let liveSession: { faculty: Faculty; slot: ScheduleSlot; secondsRemaining: number; dayDifference: number; isLive: boolean } | null = null;
+    let minLiveEndDiff = Infinity;
 
     for (const faculty of faculties) {
       for (const slot of faculty.schedule) {
@@ -53,10 +54,37 @@ export const NextConsultationCard: React.FC<NextConsultationCardProps> = ({
         const slotStartWeekSecs = slotDayIndex * 24 * 3600 + timeToMinutes(slot.startTime) * 60;
         const slotEndWeekSecs = slotDayIndex * 24 * 3600 + timeToMinutes(slot.endTime) * 60;
         
-        // Skip currently active ones
         if (currWeekSecs >= slotStartWeekSecs && currWeekSecs < slotEndWeekSecs) {
-          continue;
+          const secsLeft = slotEndWeekSecs - currWeekSecs;
+          if (secsLeft < minLiveEndDiff) {
+            minLiveEndDiff = secsLeft;
+            liveSession = {
+              faculty,
+              slot,
+              secondsRemaining: secsLeft,
+              dayDifference: 0,
+              isLive: true
+            };
+          }
         }
+      }
+    }
+
+    // If there is a live session, return it immediately
+    if (liveSession) {
+      return liveSession;
+    }
+
+    // If no live sessions, find the closest upcoming slot
+    let bestNext: { faculty: Faculty; slot: ScheduleSlot; secondsRemaining: number; dayDifference: number; isLive: boolean } | null = null;
+    let minDiff = Infinity;
+
+    for (const faculty of faculties) {
+      for (const slot of faculty.schedule) {
+        const slotDayIndex = JS_DAY_MAP.indexOf(slot.day);
+        if (slotDayIndex === -1) continue;
+        
+        const slotStartWeekSecs = slotDayIndex * 24 * 3600 + timeToMinutes(slot.startTime) * 60;
         
         const diff = getSecondsDifference(currWeekSecs, slotStartWeekSecs);
         if (diff < minDiff) {
@@ -64,12 +92,16 @@ export const NextConsultationCard: React.FC<NextConsultationCardProps> = ({
           
           let dayDiff = slotDayIndex - currentDayIndex;
           if (dayDiff < 0) dayDiff += 7;
+          if (dayDiff === 0 && currWeekSecs > slotStartWeekSecs) {
+            dayDiff = 7;
+          }
           
           bestNext = {
             faculty,
             slot,
             secondsRemaining: diff,
-            dayDifference: dayDiff
+            dayDifference: dayDiff,
+            isLive: false
           };
         }
       }
@@ -105,39 +137,38 @@ export const NextConsultationCard: React.FC<NextConsultationCardProps> = ({
     );
   }
 
-  const { faculty, slot, secondsRemaining, dayDifference } = nextConsult;
+  const { faculty, slot, secondsRemaining, dayDifference, isLive } = nextConsult;
 
-  // Format countdown nicely
-  const formatCountdown = () => {
-    if (secondsRemaining < 60) {
-      return `Starts in ${secondsRemaining} Seconds`;
+  // Format starts in countdown
+  const formatStartsIn = (seconds: number): string => {
+    if (seconds < 60) {
+      return `Starts in 00h 00m ${seconds.toString().padStart(2, '0')}s`;
     }
+    const minutes = Math.ceil(seconds / 60);
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
     
-    const minutes = Math.floor(secondsRemaining / 60);
-    const secs = secondsRemaining % 60;
-
-    if (minutes < 60) {
-      return `Starts in ${minutes} Minute${minutes === 1 ? '' : 's'} ${secs}s`;
+    if (h >= 24) {
+      const d = Math.floor(h / 24);
+      const rh = h % 24;
+      return `Starts in ${d}d ${rh.toString().padStart(2, '0')}h ${m.toString().padStart(2, '0')}m`;
     }
+    return `Starts in ${h.toString().padStart(2, '0')}h ${m.toString().padStart(2, '0')}m`;
+  };
 
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-
-    if (hours < 24) {
-      return `Starts in ${hours} Hour${hours === 1 ? '' : 's'} ${mins}m ${secs}s`;
-    }
-
-    const days = Math.floor(hours / 24);
-    const remHrs = hours % 24;
-
-    return `Starts in ${days} Day${days === 1 ? '' : 's'} ${remHrs} Hour${remHrs === 1 ? '' : 's'} ${mins}m`;
+  // Format ends in countdown
+  const formatEndsIn = (seconds: number): string => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `Ends in ${h.toString().padStart(2, '0')}h ${m.toString().padStart(2, '0')}m ${s.toString().padStart(2, '0')}s`;
   };
 
   // Label relative day
-  const getDayLabel = () => {
-    if (dayDifference === 0) return 'Today';
-    if (dayDifference === 1) return 'Tomorrow';
-    return slot.day;
+  const getDayLabel = (slotDay: string, dayDiff: number) => {
+    if (dayDiff === 0) return `Today (${slotDay})`;
+    if (dayDiff === 1) return `Tomorrow (${slotDay})`;
+    return slotDay;
   };
 
   return (
@@ -162,12 +193,22 @@ export const NextConsultationCard: React.FC<NextConsultationCardProps> = ({
         {/* Big countdown display */}
         <div className="mb-4">
           <p className="text-[10px] font-mono font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
-            Countdown Timer
+            {isLive ? 'Current Status' : 'Countdown Timer'}
           </p>
-          <h3 className="text-xl font-display font-black text-slate-950 dark:text-zinc-50 tracking-tight leading-tight mt-1 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-            {formatCountdown()}
-          </h3>
+          <div className="mt-1 flex flex-col">
+            <span className="text-sm font-semibold text-slate-800 dark:text-zinc-300">
+              {getDayLabel(slot.day, dayDifference)}
+            </span>
+            <span className="text-sm font-mono font-bold text-slate-600 dark:text-zinc-400">
+              {formatTimeString(slot.startTime, is24Hour)}
+            </span>
+            <h3 className={`text-xl font-display font-black tracking-tight leading-tight mt-1 flex items-center gap-2 ${
+              isLive ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'
+            }`}>
+              <span className={`w-2 h-2 rounded-full animate-pulse ${isLive ? 'bg-emerald-500' : 'bg-blue-500'}`}></span>
+              {isLive ? formatEndsIn(secondsRemaining) : formatStartsIn(secondsRemaining)}
+            </h3>
+          </div>
         </div>
 
         {/* Informative visual card */}
@@ -204,7 +245,7 @@ export const NextConsultationCard: React.FC<NextConsultationCardProps> = ({
               <p className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase font-bold font-mono">Schedule Time</p>
               <div className="flex items-center gap-1 mt-0.5 font-semibold text-slate-700 dark:text-zinc-300">
                 <Calendar className="w-3.5 h-3.5 text-indigo-500" />
-                <span>{getDayLabel()}, {formatTimeString(slot.startTime, is24Hour)}</span>
+                <span>{getDayLabel(slot.day, dayDifference)}, {formatTimeString(slot.startTime, is24Hour)}</span>
               </div>
             </div>
           </div>
