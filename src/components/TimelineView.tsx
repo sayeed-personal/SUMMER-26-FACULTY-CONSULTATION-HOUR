@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Faculty, ALL_DAYS, DAY_COLORS } from '../data/schedule';
 import { formatTimeString, timeToMinutes, getFacultyStatusInfo } from '../utils/timeUtils';
 import { FacultyAvatar } from './FacultyAvatar';
+import { haptic } from '../utils/haptic';
 
 interface TimelineViewProps {
   faculties: Faculty[];
@@ -73,7 +74,10 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
           return (
             <button
               key={day}
-              onClick={() => onSelectDay(day as any)}
+              onClick={() => {
+                haptic.medium();
+                onSelectDay(day as any);
+              }}
               className={`flex-1 min-w-[75px] md:min-w-0 text-center py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer truncate ${
                 isSelected
                   ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-50 shadow-xs scale-[1.02]'

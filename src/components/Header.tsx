@@ -1,6 +1,7 @@
 import React from 'react';
 import { Clock, Settings, Download, Sun, Moon, CalendarRange, Lock, Unlock } from 'lucide-react';
 import { motion } from 'motion/react';
+import { haptic } from '../utils/haptic';
 
 interface HeaderProps {
   isDarkMode: boolean;
@@ -108,7 +109,10 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center gap-1 flex-none">
             {isAdminMode ? (
               <button
-                onClick={onLockAdmin}
+                onClick={() => {
+                  haptic.heavy();
+                  onLockAdmin();
+                }}
                 className="p-1.5 rounded-lg text-emerald-500 hover:bg-emerald-500/10 dark:hover:bg-emerald-500/15 transition-colors cursor-pointer"
                 title="🔒 Lock Admin Mode"
               >
@@ -116,7 +120,10 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             ) : (
               <button
-                onClick={onUnlockAdmin}
+                onClick={() => {
+                  haptic.light();
+                  onUnlockAdmin();
+                }}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-slate-100 dark:hover:bg-zinc-900 transition-colors cursor-pointer"
                 title="Unlock Admin Mode"
               >
@@ -124,15 +131,21 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
             <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
+              onClick={() => {
+                haptic.medium();
+                setIsDarkMode(!isDarkMode);
+              }}
               className="p-1.5 rounded-lg text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-900 cursor-pointer"
               aria-label="Toggle dark mode"
             >
               {isDarkMode ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-indigo-600" />}
             </button>
             <button
-              onClick={onOpenSettings}
-              className="p-1.5 rounded-lg text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-900"
+              onClick={() => {
+                haptic.light();
+                onOpenSettings();
+              }}
+              className="p-1.5 rounded-lg text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-900 cursor-pointer"
               aria-label="Open Preferences"
             >
               <Settings className="w-3.5 h-3.5" />
@@ -238,7 +251,10 @@ export const Header: React.FC<HeaderProps> = ({
                 animate={{ opacity: 1, scale: 1 }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={onInstall}
+                onClick={() => {
+                  haptic.medium();
+                  onInstall();
+                }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-medium text-xs border border-blue-100 dark:border-blue-900/50 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all cursor-pointer"
                 title="Install App"
               >
@@ -251,7 +267,10 @@ export const Header: React.FC<HeaderProps> = ({
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => setIsDarkMode(!isDarkMode)}
+              onClick={() => {
+                haptic.medium();
+                setIsDarkMode(!isDarkMode);
+              }}
               className="p-2 rounded-lg bg-slate-100 dark:bg-zinc-800/80 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700/80 transition-all cursor-pointer"
               aria-label="Toggle Dark Mode"
             >
@@ -263,7 +282,10 @@ export const Header: React.FC<HeaderProps> = ({
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={onLockAdmin}
+                onClick={() => {
+                  haptic.heavy();
+                  onLockAdmin();
+                }}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold text-xs hover:bg-rose-500/10 hover:border-rose-500/20 hover:text-rose-600 transition-all cursor-pointer shadow-xs"
                 title="Lock Admin Mode"
               >
@@ -274,7 +296,10 @@ export const Header: React.FC<HeaderProps> = ({
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={onUnlockAdmin}
+                onClick={() => {
+                  haptic.light();
+                  onUnlockAdmin();
+                }}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-100 dark:bg-zinc-800/80 text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 font-medium text-xs border border-slate-200/20 dark:border-zinc-800/20 hover:bg-slate-200 dark:hover:bg-zinc-700/80 transition-all cursor-pointer"
                 title="Unlock Admin Mode"
               >
@@ -287,7 +312,10 @@ export const Header: React.FC<HeaderProps> = ({
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={onOpenSettings}
+              onClick={() => {
+                haptic.light();
+                onOpenSettings();
+              }}
               className="p-2 rounded-lg bg-slate-100 dark:bg-zinc-800/80 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700/80 transition-all cursor-pointer"
               aria-label="Open Settings"
             >

@@ -315,8 +315,12 @@ export default function App() {
     localStorage.setItem('brac_dark_mode', String(isDarkMode));
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
+      document.documentElement.style.colorScheme = 'dark';
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#0A0A0C');
     } else {
       document.documentElement.classList.remove('dark');
+      document.documentElement.style.colorScheme = 'light';
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#ffffff');
     }
   }, [isDarkMode]);
 

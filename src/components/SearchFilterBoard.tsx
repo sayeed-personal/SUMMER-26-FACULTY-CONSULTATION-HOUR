@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, RotateCcw, Star, X, Filter, BookOpen, MapPin, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Faculty } from '../data/schedule';
+import { haptic } from '../utils/haptic';
 
 interface SearchFilterBoardProps {
   faculties: Faculty[];
@@ -80,6 +81,7 @@ export const SearchFilterBoard: React.FC<SearchFilterBoardProps> = ({
 
   // Toggle individual faculty initial checkbox filters
   const toggleFacultyFilter = (initial: string) => {
+    haptic.light();
     if (selectedFacultyFilter.includes(initial)) {
       setSelectedFacultyFilter(selectedFacultyFilter.filter(i => i !== initial));
     } else {
@@ -190,7 +192,10 @@ export const SearchFilterBoard: React.FC<SearchFilterBoardProps> = ({
 
           {/* Favorites Switcher */}
           <button
-            onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
+            onClick={() => {
+              haptic.medium();
+              setShowOnlyFavorites(!showOnlyFavorites);
+            }}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all cursor-pointer font-bold ${
               showOnlyFavorites
                 ? 'bg-amber-500 border-amber-500 text-white shadow-xs'

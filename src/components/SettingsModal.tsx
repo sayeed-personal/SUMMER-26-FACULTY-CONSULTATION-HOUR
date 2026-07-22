@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Clock, Eye, Trash2, ShieldAlert, Sparkles, Smartphone, Check, SlidersHorizontal, Users, Lock, Unlock, Key, History } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { haptic } from '../utils/haptic';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -132,7 +133,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
                 <div className="p-0.5 rounded-xl bg-slate-200 dark:bg-zinc-850 flex border border-slate-300/40 dark:border-zinc-800">
                   <button
-                    onClick={() => setIs24Hour(false)}
+                    onClick={() => {
+                      haptic.medium();
+                      setIs24Hour(false);
+                    }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       !is24Hour
                         ? 'bg-white dark:bg-zinc-800 text-slate-850 dark:text-zinc-100 shadow-xs'
@@ -142,7 +146,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     12H
                   </button>
                   <button
-                    onClick={() => setIs24Hour(true)}
+                    onClick={() => {
+                      haptic.medium();
+                      setIs24Hour(true);
+                    }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       is24Hour
                         ? 'bg-white dark:bg-zinc-800 text-slate-850 dark:text-zinc-100 shadow-xs'
@@ -166,7 +173,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
                 <div className="p-0.5 rounded-xl bg-slate-200 dark:bg-zinc-850 flex border border-slate-300/40 dark:border-zinc-800">
                   <button
-                    onClick={() => setIsDarkMode(false)}
+                    onClick={() => {
+                      haptic.medium();
+                      setIsDarkMode(false);
+                    }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       !isDarkMode
                         ? 'bg-white dark:bg-zinc-800 text-slate-850 dark:text-zinc-100 shadow-xs'
@@ -176,7 +186,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     Light
                   </button>
                   <button
-                    onClick={() => setIsDarkMode(true)}
+                    onClick={() => {
+                      haptic.medium();
+                      setIsDarkMode(true);
+                    }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       isDarkMode
                         ? 'bg-white dark:bg-zinc-800 text-slate-850 dark:text-zinc-100 shadow-xs'
